@@ -9,3 +9,4 @@ flask-wtf
 gunicorn
 psycopg2-binary
 email-validator
+fastapi
