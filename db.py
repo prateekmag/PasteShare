@@ -7,7 +7,7 @@ from branch_utils import get_branch_data, is_valid_branch
 from flask import g, has_app_context
 
 # Database connection string
-DATABASE_URL = os.environ.get("postgresql://petrolpro_user:Vw9khY38RQPzVjknEhIHumaqxE9FSPqz@dpg-d07p2bjuibrs73fn52pg-a.oregon-postgres.render.com/petrolpro")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 @contextmanager
 def test_db_connection():
