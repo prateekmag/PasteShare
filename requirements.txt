@@ -1,3 +1,9 @@
 Flask
 python-dotenv
 openai
+requests
+flask-cors
+flask-login
+flask-sqlalchemy
+flask-wtf
+gunicorn
