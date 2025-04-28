@@ -1,0 +1,366 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Customer Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Customer Information</h5>
+                    <div>
+                        <a href="/credit-customers" class="btn btn-outline-light btn-sm me-2">
+                            <i class="bi bi-arrow-left"></i> Back to List
+                        </a>
+                        <a href="/credit-customers/{{ history.customer.customer_id }}/add-transaction" class="btn btn-success btn-sm">
+                            Record Transaction
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-striped">
+                                <tr>
+                                    <th class="w-25">Customer ID:</th>
+                                    <td>{{ history.customer.customer_id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Name:</th>
+                                    <td>{{ history.customer.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type:</th>
+                                    <td>
+                                        {% if history.customer.customer_type == 'government' %}
+                                            <span class="badge bg-info">GOVERNMENT</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">GENERAL</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Contact Person:</th>
+                                    <td>{{ history.customer.contact_person or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ history.customer.phone_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>WhatsApp:</th>
+                                    <td>{{ history.customer.whatsapp_number or '-' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-striped">
+                                <tr>
+                                    <th class="w-25">Email:</th>
+                                    <td>{{ history.customer.email or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Address:</th>
+                                    <td>{{ history.customer.address or '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Credit Limit:</th>
+                                    <td>₹{{ "%.2f"|format(history.customer.credit_limit) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Current Balance:</th>
+                                    <td class="{% if history.customer.current_balance > 0 %}text-danger fw-bold{% endif %}">
+                                        ₹{{ "%.2f"|format(history.customer.current_balance) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Credit Period:</th>
+                                    <td>{{ history.customer.credit_days|default(30, true) }} days</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Payment:</th>
+                                    <td>{{ history.customer.last_payment_date|default('-', true) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        {% if history.customer.status == 'active' %}
+                                            <span class="badge bg-success">ACTIVE</span>
+                                        {% elif history.customer.status == 'inactive' %}
+                                            <span class="badge bg-warning">INACTIVE</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">BLACKLISTED</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="row">
+                        <div class="col-md-12 mb-2">
+                            <div id="eligibilityStatus" class="alert" style="display: none;"></div>
+                        </div>
+                        <div class="col-md-12 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge rounded-pill {% if history.customer.current_balance > history.customer.credit_limit %}bg-danger{% elif history.customer.current_balance > history.customer.credit_limit * 0.75 %}bg-warning{% else %}bg-success{% endif %} me-2">
+                                    Credit Utilization: {{ "%.1f"|format((history.customer.current_balance / history.customer.credit_limit * 100) if history.customer.credit_limit > 0 else 0) }}%
+                                </span>
+                                <span id="overdueStatus" class="badge rounded-pill me-2" style="display: none;"></span>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-success me-2" onclick="openWhatsAppModal('{{ history.customer.customer_id }}', '{{ history.customer.name }}', '{{ history.customer.whatsapp_number or history.customer.phone_number }}', {{ history.customer.current_balance }})"
+                                    {% if not history.customer.phone_number %}disabled{% endif %}>
+                                    <i class="bi bi-whatsapp"></i> Send Payment Reminder
+                                </button>
+                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editStatusModal">
+                                    Change Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Transaction History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Reference</th>
+                                    <th>Payment Method</th>
+                                    <th>Notes</th>
+                                    <th>Recorded By</th>
+                                    <th>Balance After</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if history.transactions and history.transactions|length > 0 %}
+                                    {% for transaction in history.transactions %}
+                                        <tr>
+                                            <td>{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') if transaction.timestamp else '-' }}</td>
+                                            <td>
+                                                {% if transaction.transaction_type == 'purchase' %}
+                                                <span class="badge bg-danger">PURCHASE</span>
+                                                {% else %}
+                                                <span class="badge bg-success">PAYMENT</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
+                                            <td>{{ transaction.reference_number or '-' }}</td>
+                                            <td>{{ transaction.payment_method or '-' }}</td>
+                                            <td>{{ transaction.notes or '-' }}</td>
+                                            <td>{{ transaction.recorded_by }}</td>
+                                            <td class="{% if transaction.balance_after > 0 %}text-danger{% endif %} fw-bold">
+                                                ₹{{ "%.2f"|format(transaction.balance_after) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No transaction history found</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-end">
+                        <a href="/credit-customers/{{ history.customer.customer_id }}/add-transaction" class="btn btn-primary">
+                            Record New Transaction
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="editStatusModal" tabindex="-1" aria-labelledby="editStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/credit-customers/{{ history.customer.customer_id }}" method="POST">
+                <input type="hidden" name="_method" value="PATCH">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editStatusModalLabel">Update Customer Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="active" {% if history.customer.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if history.customer.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="blacklisted" {% if history.customer.status == 'blacklisted' %}selected{% endif %}>Blacklisted</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="credit_days" class="form-label">Credit Period (Days)</label>
+                        <input type="number" class="form-control" id="credit_days" name="credit_days" 
+                               min="1" value="{{ history.customer.credit_days|default(30, true) }}">
+                        <div class="form-text">Maximum days allowed before payment is due</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Reason for change</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp Modal -->
+<div class="modal fade" id="whatsappModal" tabindex="-1" aria-labelledby="whatsappModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="whatsappModalLabel">Send Payment Reminder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="reminder-customer" class="form-label">Customer</label>
+                    <input type="text" class="form-control" id="reminder-customer" readonly>
+                    <input type="hidden" id="reminder-customer-id">
+                    <input type="hidden" id="reminder-phone">
+                </div>
+                <div class="mb-3">
+                    <label for="reminder-message" class="form-label">Message</label>
+                    <textarea class="form-control" id="reminder-message" rows="5"></textarea>
+                </div>
+                <div class="alert alert-info">
+                    <small>WhatsApp integration will be implemented in a future update. This is currently a placeholder.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="send-reminder-btn">Send Reminder</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create status form submit logic
+        const statusForm = document.querySelector('#editStatusModal form');
+        statusForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(statusForm);
+            const data = {
+                status: formData.get('status'),
+                credit_days: parseInt(formData.get('credit_days'), 10),
+                notes: formData.get('notes')
+            };
+            
+            fetch('/api/credit/customers/{{ history.customer.customer_id }}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to update status'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating status. Please try again.');
+            });
+        });
+
+        // WhatsApp modal functionality
+        window.openWhatsAppModal = function(customerId, customerName, phoneNumber, balance) {
+            const modal = new bootstrap.Modal(document.getElementById('whatsappModal'));
+            const customerInput = document.getElementById('reminder-customer');
+            const customerIdInput = document.getElementById('reminder-customer-id');
+            const phoneInput = document.getElementById('reminder-phone');
+            const messageInput = document.getElementById('reminder-message');
+            
+            customerInput.value = customerName;
+            customerIdInput.value = customerId;
+            phoneInput.value = phoneNumber;
+            
+            // Default message
+            messageInput.value = `Dear ${customerName},\n\nThis is a reminder that you have an outstanding balance of ₹${balance.toFixed(2)} with us. Please make a payment at your earliest convenience.\n\nThank you,\nPetrolPro Team`;
+            
+            modal.show();
+        };
+        
+        // Send reminder button
+        document.getElementById('send-reminder-btn').addEventListener('click', function() {
+            alert('WhatsApp integration will be implemented in a future update.');
+            bootstrap.Modal.getInstance(document.getElementById('whatsappModal')).hide();
+        });
+        
+        // Check credit eligibility when page loads
+        fetch('/api/credit/customers/{{ history.customer.customer_id }}/eligibility')
+            .then(response => response.json())
+            .then(data => {
+                const eligibilityStatus = document.getElementById('eligibilityStatus');
+                const overdueStatus = document.getElementById('overdueStatus');
+                
+                if (data && data.credit_status) {
+                    // Update overdue status badge
+                    if (data.credit_status.is_overdue) {
+                        overdueStatus.innerText = `Payment Overdue: ${data.credit_status.days_overdue} days`;
+                        overdueStatus.classList.add('bg-danger');
+                        overdueStatus.style.display = 'inline-block';
+                    } else if (data.credit_status.days_remaining) {
+                        overdueStatus.innerText = `Payment Due In: ${data.credit_status.days_remaining} days`;
+                        overdueStatus.classList.add('bg-info');
+                        overdueStatus.style.display = 'inline-block';
+                    }
+                    
+                    // Show eligibility alert
+                    if (!data.eligibility) {
+                        eligibilityStatus.classList.add('alert-danger');
+                        eligibilityStatus.innerHTML = `<strong>Credit Restricted:</strong> ${data.reason}`;
+                        eligibilityStatus.style.display = 'block';
+                    } else if (data.credit_status.available_credit < data.credit_status.credit_limit * 0.2) {
+                        // Low available credit warning
+                        eligibilityStatus.classList.add('alert-warning');
+                        eligibilityStatus.innerHTML = `<strong>Warning:</strong> Low available credit (₹${data.credit_status.available_credit.toFixed(2)})`;
+                        eligibilityStatus.style.display = 'block';
+                    } else {
+                        // Good standing
+                        eligibilityStatus.classList.add('alert-success');
+                        eligibilityStatus.innerHTML = `<strong>Good Standing:</strong> Customer is eligible for credit up to ₹${data.credit_status.available_credit.toFixed(2)}`;
+                        eligibilityStatus.style.display = 'block';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error checking credit eligibility:', error);
+            });
+    });
+</script>
+{% endblock %}

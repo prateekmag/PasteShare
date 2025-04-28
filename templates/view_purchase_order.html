@@ -1,0 +1,355 @@
+{% extends "layout.html" %}
+
+{% block title %}View Purchase Order{% endblock %}
+
+{% block page_title %}Purchase Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('purchase_orders_view') }}" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Purchase Orders
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Order Details</h5>
+                <div>
+                    {% if order.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif order.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                    {% elif order.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
+                    {% elif order.status == 'completed' %}
+                        <span class="badge bg-info">Completed</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Branch:</strong> {{ order.branch_id }}</p>
+                        <p><strong>Product Type:</strong> {{ order.product_type }}</p>
+                        <p><strong>Quantity:</strong> {{ "%.2f"|format(order.quantity) }}</p>
+                        <p><strong>Unit Price:</strong> ₹{{ "%.2f"|format(order.unit_price) }}</p>
+                        <p><strong>Total Amount:</strong> ₹{{ "%.2f"|format(order.total_amount) }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Requested By:</strong> {{ order.requested_by }}</p>
+                        <p><strong>Date Requested:</strong> {{ order.timestamp.strftime('%Y-%m-%d %H:%M') if order.timestamp and order.timestamp.__class__.__name__ != 'str' else (order.timestamp[:16].replace('T', ' ') if order.timestamp else 'N/A') }}</p>
+                        <p><strong>Supplier:</strong> {{ order.supplier or 'N/A' }}</p>
+                        <p><strong>Expected Delivery:</strong> {{ order.expected_delivery_date.strftime('%Y-%m-%d') if order.expected_delivery_date and order.expected_delivery_date.__class__.__name__ != 'str' else (order.expected_delivery_date[:10] if order.expected_delivery_date else 'N/A') }}</p>
+                        {% if order.approved_by %}
+                            <p><strong>Approved/Rejected By:</strong> {{ order.approved_by }}</p>
+                            <p><strong>Approval Date:</strong> {{ order.approved_at.strftime('%Y-%m-%d %H:%M') if order.approved_at and order.approved_at.__class__.__name__ != 'str' else (order.approved_at[:16].replace('T', ' ') if order.approved_at else 'N/A') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if order.notes %}
+                    <div class="mt-3">
+                        <strong>Notes:</strong>
+                        <p class="mt-2">{{ order.notes }}</p>
+                    </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Payment Status</h6>
+                        <div>
+                            {% if order.payment_status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif order.payment_status == 'partial' %}
+                                <span class="badge bg-primary">Partial</span>
+                            {% elif order.payment_status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if order.payment_amount > 0 %}
+                        <p class="mt-2"><strong>Payment Amount:</strong> ₹{{ "%.2f"|format(order.payment_amount) }}</p>
+                    {% endif %}
+                    {% if order.payment_reference %}
+                        <p><strong>Payment Reference:</strong> {{ order.payment_reference }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Admin Actions Card (shown only for 'all' branch selection) -->
+        <div class="card mb-4" id="admin-actions-card" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Admin Actions</h5>
+            </div>
+            <div class="card-body">
+                {% if order.status == 'pending' %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form method="post" action="{{ url_for('approve_purchase_order_view', order_id=order.id) }}">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    Approve Order
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="post" action="{{ url_for('reject_purchase_order_view', order_id=order.id) }}">
+                                <div class="mb-3">
+                                    <label for="approved_by" class="form-label">Your Name</label>
+                                    <input type="text" class="form-control" id="approved_by" name="approved_by" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label">Reason for Rejection</label>
+                                    <textarea class="form-control" id="reason" name="reason" rows="2"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    Reject Order
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if order.status == 'approved' %}
+                    <form method="post" action="{{ url_for('update_payment_status_view', order_id=order.id) }}">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payment_status" class="form-label">Payment Status</label>
+                                    <select class="form-select" id="payment_status" name="payment_status" required>
+                                        <option value="pending" {% if order.payment_status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="partial" {% if order.payment_status == 'partial' %}selected{% endif %}>Partial</option>
+                                        <option value="completed" {% if order.payment_status == 'completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payment_amount" class="form-label">Payment Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" min="0" step="0.01" value="{{ "%.2f"|format(order.payment_amount) }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payment_reference" class="form-label">Reference</label>
+                                    <input type="text" class="form-control" id="payment_reference" name="payment_reference" value="{{ order.payment_reference or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Payment Status</button>
+                    </form>
+                    
+                    <div class="border-top mt-4 pt-4">
+                        <form method="post" action="{{ url_for('complete_purchase_order_view', order_id=order.id) }}">
+                            <button type="submit" class="btn btn-success" {% if order.payment_status != 'completed' %}disabled{% endif %}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                Mark as Completed
+                            </button>
+                            {% if order.payment_status != 'completed' %}
+                                <small class="text-muted d-block mt-2">Payment must be completed before marking the order as completed.</small>
+                            {% endif %}
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Order Timeline</h5>
+            </div>
+            <div class="card-body">
+                <ul class="timeline">
+                    <li class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Order Created</h6>
+                            <p class="mb-0 text-muted">{{ order.timestamp.strftime('%Y-%m-%d %H:%M') if order.timestamp and order.timestamp.__class__.__name__ != 'str' else (order.timestamp[:16].replace('T', ' ') if order.timestamp else 'N/A') }}</p>
+                            <p class="mb-0 text-muted">By: {{ order.requested_by }}</p>
+                        </div>
+                    </li>
+                    
+                    {% if order.approved_by %}
+                        <li class="timeline-item">
+                            <div class="timeline-marker {% if order.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Order {{ order.status|capitalize }}</h6>
+                                <p class="mb-0 text-muted">{{ order.approved_at.strftime('%Y-%m-%d %H:%M') if order.approved_at and order.approved_at.__class__.__name__ != 'str' else (order.approved_at[:16].replace('T', ' ') if order.approved_at else 'N/A') }}</p>
+                                <p class="mb-0 text-muted">By: {{ order.approved_by }}</p>
+                            </div>
+                        </li>
+                    {% endif %}
+                    
+                    {% if order.payment_status != 'pending' %}
+                        <li class="timeline-item">
+                            <div class="timeline-marker {% if order.payment_status == 'completed' %}bg-success{% else %}bg-primary{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Payment {{ order.payment_status|capitalize }}</h6>
+                                <p class="mb-0 text-muted">Amount: ₹{{ "%.2f"|format(order.payment_amount) }}</p>
+                                {% if order.payment_reference %}
+                                    <p class="mb-0 text-muted">Reference: {{ order.payment_reference }}</p>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endif %}
+                    
+                    {% if order.status == 'completed' %}
+                        <li class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Order Completed</h6>
+                                <p class="mb-0 text-muted">All items received</p>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Order Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Status Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Current Status</h6>
+                    <div class="progress">
+                        {% if order.status == 'pending' %}
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">Pending</div>
+                        {% elif order.status == 'approved' %}
+                            {% if order.payment_status == 'pending' %}
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">Approved</div>
+                            {% elif order.payment_status == 'partial' %}
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">Payment Partial</div>
+                            {% elif order.payment_status == 'completed' %}
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 90%" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">Payment Complete</div>
+                            {% endif %}
+                        {% elif order.status == 'completed' %}
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Completed</div>
+                        {% elif order.status == 'rejected' %}
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Rejected</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6>Order Status</h6>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Order Created
+                            <span class="badge bg-success">✓</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Order Approved
+                            {% if order.status == 'approved' or order.status == 'completed' %}
+                                <span class="badge bg-success">✓</span>
+                            {% elif order.status == 'rejected' %}
+                                <span class="badge bg-danger">✗</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Payment Complete
+                            {% if order.payment_status == 'completed' %}
+                                <span class="badge bg-success">✓</span>
+                            {% elif order.payment_status == 'partial' %}
+                                <span class="badge bg-primary">Partial</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Order Fulfilled
+                            {% if order.status == 'completed' %}
+                                <span class="badge bg-success">✓</span>
+                            {% elif order.status == 'rejected' %}
+                                <span class="badge bg-danger">✗</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show admin actions for admin branch selection
+    const selectedBranch = document.getElementById('branch-selector').value;
+    const adminActionsCard = document.getElementById('admin-actions-card');
+    
+    if (selectedBranch === 'all') {
+        adminActionsCard.style.display = 'block';
+    }
+    
+    // Update admin actions visibility when branch changes
+    document.getElementById('branch-selector').addEventListener('change', function() {
+        if (this.value === 'all') {
+            adminActionsCard.style.display = 'block';
+        } else {
+            adminActionsCard.style.display = 'none';
+        }
+    });
+});
+</script>
+
+<style>
+/* Timeline styles */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+    list-style: none;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    left: -30px;
+    top: 5px;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 20px;
+    height: calc(100% - 15px);
+    width: 2px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.timeline-content {
+    padding-bottom: 10px;
+}
+</style>
+{% endblock %}

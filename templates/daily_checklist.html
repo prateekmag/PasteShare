@@ -1,0 +1,331 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Daily Checklist{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h3 mb-0">Daily Station Operations Checklist</h2>
+            <a href="/daily-checklist/add" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Create New Checklist
+            </a>
+        </div>
+        <p class="text-muted">Track daily operational tasks for each station branch</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Today's Checklist Status</h5>
+                <div class="d-flex" id="today-checklist-actions">
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="refresh-today">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-refresh-cw me-1"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" id="today-checklist">
+                <div class="d-flex justify-content-center py-5" id="loading-container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                
+                <div id="today-checklist-content" class="d-none">
+                    <!-- Checklist content will be loaded here -->
+                </div>
+                
+                <div id="no-checklist-message" class="text-center py-5 d-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <h4>No Checklist Yet</h4>
+                    <p class="text-muted">There's no checklist recorded for today. Create a new one to track daily tasks.</p>
+                    <a href="/daily-checklist/add" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Create Checklist
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Previous Checklists</h5>
+                <div class="d-flex">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-history">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-refresh-cw me-1"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Branch</th>
+                                <th>Completed By</th>
+                                <th>Dispenser Test</th>
+                                <th>Pump Cleaning</th>
+                                <th>Bathroom Cleaning</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="checklist-history">
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    Loading checklist history...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const branchSelector = document.getElementById('branch-selector');
+        if (branchSelector) {
+            const selectedBranch = branchSelector.value;
+            loadTodayChecklist(selectedBranch);
+            loadChecklistHistory(selectedBranch);
+            
+            // Branch selector change
+            branchSelector.addEventListener('change', function() {
+                loadTodayChecklist(this.value);
+                loadChecklistHistory(this.value);
+            });
+        }
+        
+        // Refresh buttons
+        document.getElementById('refresh-today').addEventListener('click', function() {
+            const branchSelector = document.getElementById('branch-selector');
+            if (branchSelector) {
+                loadTodayChecklist(branchSelector.value);
+            }
+        });
+        
+        document.getElementById('refresh-history').addEventListener('click', function() {
+            const branchSelector = document.getElementById('branch-selector');
+            if (branchSelector) {
+                loadChecklistHistory(branchSelector.value);
+            }
+        });
+    });
+    
+    function loadTodayChecklist(branchId) {
+        const loadingContainer = document.getElementById('loading-container');
+        const todayContent = document.getElementById('today-checklist-content');
+        const noChecklistMessage = document.getElementById('no-checklist-message');
+        
+        loadingContainer.classList.remove('d-none');
+        todayContent.classList.add('d-none');
+        noChecklistMessage.classList.add('d-none');
+        
+        fetch(`/api/daily-checklists/today?branch_id=${branchId}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingContainer.classList.add('d-none');
+                
+                if (data.status === 'info' || !data) {
+                    // No checklist found for today
+                    noChecklistMessage.classList.remove('d-none');
+                    return;
+                }
+                
+                todayContent.innerHTML = renderTodayChecklist(data);
+                todayContent.classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error fetching today\'s checklist:', error);
+                loadingContainer.classList.add('d-none');
+                noChecklistMessage.classList.remove('d-none');
+            });
+    }
+    
+    function renderTodayChecklist(checklist) {
+        const date = new Date(checklist.date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Date:</strong> ${formattedDate}</p>
+                    <p class="mb-1"><strong>Branch:</strong> ${checklist.branch_id}</p>
+                    <p class="mb-3"><strong>Completed By:</strong> ${checklist.completed_by}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1"><strong>Checklist ID:</strong> ${checklist.id}</p>
+                    <p class="mb-3"><small class="text-muted">Last updated: ${new Date(checklist.timestamp).toLocaleString()}</small></p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 ${checklist.dispenser_test_done ? 'border-success' : 'border-danger'}">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                ${checklist.dispenser_test_done 
+                                    ? '<span class="badge bg-success p-3 rounded-circle"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' 
+                                    : '<span class="badge bg-danger p-3 rounded-circle"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>'}
+                            </div>
+                            <h5>Dispenser Test</h5>
+                            <p class="text-muted">Verification of dispenser accuracy</p>
+                            <p class="${checklist.dispenser_test_done ? 'text-success' : 'text-danger'}">
+                                ${checklist.dispenser_test_done ? 'Completed' : 'Not Completed'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 ${checklist.pump_cleaning_done ? 'border-success' : 'border-danger'}">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                ${checklist.pump_cleaning_done 
+                                    ? '<span class="badge bg-success p-3 rounded-circle"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' 
+                                    : '<span class="badge bg-danger p-3 rounded-circle"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>'}
+                            </div>
+                            <h5>Pump Cleaning</h5>
+                            <p class="text-muted">Cleaning of pump exteriors and nozzles</p>
+                            <p class="${checklist.pump_cleaning_done ? 'text-success' : 'text-danger'}">
+                                ${checklist.pump_cleaning_done ? 'Completed' : 'Not Completed'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 ${checklist.bathroom_cleaning_done ? 'border-success' : 'border-danger'}">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                ${checklist.bathroom_cleaning_done 
+                                    ? '<span class="badge bg-success p-3 rounded-circle"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' 
+                                    : '<span class="badge bg-danger p-3 rounded-circle"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>'}
+                            </div>
+                            <h5>Bathroom Cleaning</h5>
+                            <p class="text-muted">Cleaning and restocking of bathroom facilities</p>
+                            <p class="${checklist.bathroom_cleaning_done ? 'text-success' : 'text-danger'}">
+                                ${checklist.bathroom_cleaning_done ? 'Completed' : 'Not Completed'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${checklist.notes ? `
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-transparent">
+                            <h6 class="mb-0">Notes</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>${checklist.notes}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>` : ''}
+        `;
+    }
+    
+    function loadChecklistHistory(branchId) {
+        const historyContainer = document.getElementById('checklist-history');
+        
+        // Format today and 30 days ago for the API call
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        const startDate = thirtyDaysAgo.toISOString();
+        const endDate = today.toISOString();
+        
+        fetch(`/api/daily-checklists?branch_id=${branchId}&start_date=${startDate}&end_date=${endDate}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data || data.length === 0) {
+                    historyContainer.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <p class="text-muted mb-0">No checklist records found for the last 30 days</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first)
+                data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // Create table rows
+                historyContainer.innerHTML = data.map(checklist => {
+                    const date = new Date(checklist.date);
+                    return `
+                        <tr>
+                            <td>${date.toLocaleDateString()}</td>
+                            <td>${checklist.branch_id}</td>
+                            <td>${checklist.completed_by}</td>
+                            <td>
+                                ${checklist.dispenser_test_done 
+                                    ? '<span class="badge bg-success">Completed</span>' 
+                                    : '<span class="badge bg-danger">Not Completed</span>'}
+                            </td>
+                            <td>
+                                ${checklist.pump_cleaning_done 
+                                    ? '<span class="badge bg-success">Completed</span>' 
+                                    : '<span class="badge bg-danger">Not Completed</span>'}
+                            </td>
+                            <td>
+                                ${checklist.bathroom_cleaning_done 
+                                    ? '<span class="badge bg-success">Completed</span>' 
+                                    : '<span class="badge bg-danger">Not Completed</span>'}
+                            </td>
+                            <td>
+                                ${checklist.notes 
+                                    ? `<span class="d-inline-block text-truncate" style="max-width: 150px;" data-bs-toggle="tooltip" title="${checklist.notes}">${checklist.notes}</span>` 
+                                    : '<span class="text-muted">No notes</span>'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // Initialize tooltips
+                const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                tooltips.forEach(tooltip => {
+                    new bootstrap.Tooltip(tooltip);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching checklist history:', error);
+                historyContainer.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <p class="text-danger mb-0">Error loading checklist history. Please try again.</p>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+</script>
+{% endblock %}

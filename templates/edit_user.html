@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card border-0">
+        <div class="card-header bg-dark">
+            <h1 class="h4 mb-0">Edit User: {{ user.username }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('auth.edit_user', user_id=user.id) }}">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="full_name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Leave blank to keep current password">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Leave blank to keep current password">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-select" id="role" name="role" required>
+                        {% if user.role == 'admin' or 'admin' in available_roles|map(attribute='value') %}
+                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                        {% endif %}
+                        
+                        {% if user.role == 'senior_manager' or 'senior_manager' in available_roles|map(attribute='value') %}
+                            <option value="senior_manager" {% if user.role == 'senior_manager' %}selected{% endif %}>Senior Manager</option>
+                        {% endif %}
+                        
+                        {% if user.role == 'manager' or 'manager' in available_roles|map(attribute='value') %}
+                            <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                        {% endif %}
+                        
+                        {% if user.role == 'pumpman' or 'pumpman' in available_roles|map(attribute='value') %}
+                            <option value="pumpman" {% if user.role == 'pumpman' %}selected{% endif %}>Pumpman</option>
+                        {% endif %}
+                        
+                        {% if user.role == 'tanker_driver' or 'tanker_driver' in available_roles|map(attribute='value') %}
+                            <option value="tanker_driver" {% if user.role == 'tanker_driver' %}selected{% endif %}>Tanker Driver</option>
+                        {% endif %}
+                    </select>
+                    <small class="text-muted">The available roles are determined by your access level.</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="branch_id" class="form-label">Branch</label>
+                    <select class="form-select" id="branch_id" name="branch_id" {% if not current_user.is_admin() %}disabled{% endif %}>
+                        {% if current_user.is_admin() %}
+                            <option value="all" {% if not user.branch_id %}selected{% endif %}>All Branches</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}" {% if user.branch_id == branch.id %}selected{% endif %}>{{ branch.name }}</option>
+                            {% endfor %}
+                        {% else %}
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}" {% if branch.id == current_user.branch_id %}selected{% endif %}>{{ branch.name }}</option>
+                            {% endfor %}
+                            <input type="hidden" name="branch_id" value="{{ current_user.branch_id }}">
+                        {% endif %}
+                    </select>
+                    {% if not current_user.is_admin() %}
+                        <small class="text-muted">As a Senior Manager, you can only assign users to your branch.</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if user.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Active</label>
+                </div>
+                
+                <div class="text-end">
+                    <a href="{{ url_for('auth.manage_users') }}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

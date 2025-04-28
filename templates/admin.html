@@ -1,0 +1,552 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-primary d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div>
+                You are viewing the Admin Dashboard with combined data from all branches.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Branches</h5>
+                <h2 class="display-4" id="branch-count">3</h2>
+                <p class="card-text">Active petrol stations</p>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="#branch-details">View Details</a>
+                <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Staff</h5>
+                <h2 class="display-4" id="staff-count">15</h2>
+                <p class="card-text">Across all branches</p>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="#staff-details">View Details</a>
+                <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Monthly Sales</h5>
+                <h2 class="display-4" id="monthly-sales">₹23.5K</h2>
+                <p class="card-text">Combined revenue</p>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="#sales-details">View Details</a>
+                <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Alerts</h5>
+                <h2 class="display-4" id="alert-count">5</h2>
+                <p class="card-text">Require attention</p>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="#alert-details">View Details</a>
+                <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Branch Performance Comparison</span>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        This Month
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="timeRangeDropdown">
+                        <li><a class="dropdown-item" href="#" data-range="week">This Week</a></li>
+                        <li><a class="dropdown-item active" href="#" data-range="month">This Month</a></li>
+                        <li><a class="dropdown-item" href="#" data-range="quarter">This Quarter</a></li>
+                        <li><a class="dropdown-item" href="#" data-range="year">This Year</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="branchComparisonChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <span id="alert-details">System Alerts</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush border-bottom scrollarea" style="max-height: 365px; overflow-y: auto;">
+                    <a href="#" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex w-100 align-items-center justify-content-between">
+                            <div>
+                                <strong class="mb-1">Tank Level Low</strong>
+                                <div class="small text-muted">Branch #2 - Tank #1 is below 15% capacity</div>
+                            </div>
+                            <span class="badge bg-danger rounded-pill">Critical</span>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex w-100 align-items-center justify-content-between">
+                            <div>
+                                <strong class="mb-1">Maintenance Required</strong>
+                                <div class="small text-muted">Branch #3 - Pump #2 needs servicing</div>
+                            </div>
+                            <span class="badge bg-warning rounded-pill">Warning</span>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex w-100 align-items-center justify-content-between">
+                            <div>
+                                <strong class="mb-1">Shift Unmanned</strong>
+                                <div class="small text-muted">Branch #1 - Night shift lacking staff</div>
+                            </div>
+                            <span class="badge bg-danger rounded-pill">Critical</span>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex w-100 align-items-center justify-content-between">
+                            <div>
+                                <strong class="mb-1">Sales Target Missed</strong>
+                                <div class="small text-muted">Branch #2 - Below monthly target by 15%</div>
+                            </div>
+                            <span class="badge bg-warning rounded-pill">Warning</span>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action py-3">
+                        <div class="d-flex w-100 align-items-center justify-content-between">
+                            <div>
+                                <strong class="mb-1">System Update Available</strong>
+                                <div class="small text-muted">Software update v2.3.4 ready to install</div>
+                            </div>
+                            <span class="badge bg-info rounded-pill">Info</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header" id="branch-details">
+                <span>Branch Status</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Branch</th>
+                                <th>Manager</th>
+                                <th>Tanks</th>
+                                <th>Staff</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Branch #1 - Main Station</td>
+                                <td>John Peterson</td>
+                                <td>3/3 Active</td>
+                                <td>7 Staff</td>
+                                <td><span class="badge bg-success">Operational</span></td>
+                            </tr>
+                            <tr>
+                                <td>Branch #2 - North Station</td>
+                                <td>Sarah Williams</td>
+                                <td>2/3 Active</td>
+                                <td>5 Staff</td>
+                                <td><span class="badge bg-warning">Maintenance</span></td>
+                            </tr>
+                            <tr>
+                                <td>Branch #3 - East Station</td>
+                                <td>Michael Chen</td>
+                                <td>2/2 Active</td>
+                                <td>3 Staff</td>
+                                <td><span class="badge bg-success">Operational</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header" id="sales-details">
+                <span>Sales by Branch</span>
+            </div>
+            <div class="card-body">
+                <canvas id="salesByBranchChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span id="staff-details">Staff Overview</span>
+                <button class="btn btn-sm btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Add Staff
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee ID</th>
+                                <th>Name</th>
+                                <th>Branch</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>EMP001</td>
+                                <td>John Peterson</td>
+                                <td>Branch #1</td>
+                                <td>Manager</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>EMP002</td>
+                                <td>Sarah Williams</td>
+                                <td>Branch #2</td>
+                                <td>Manager</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>EMP003</td>
+                                <td>Michael Chen</td>
+                                <td>Branch #3</td>
+                                <td>Manager</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>EMP004</td>
+                                <td>Emily Johnson</td>
+                                <td>Branch #1</td>
+                                <td>Attendant</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>EMP005</td>
+                                <td>David Martinez</td>
+                                <td>Branch #2</td>
+                                <td>Attendant</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav aria-label="Staff pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Combined Reports</span>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="reportTypeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        All Reports
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reportTypeDropdown">
+                        <li><a class="dropdown-item active" href="#" data-type="all">All Reports</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="fuel">Fuel Consumption</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="sales">Sales Performance</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="inventory">Inventory Management</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Branch</th>
+                                <th>Report Type</th>
+                                <th>Period</th>
+                                <th>Generated At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>25</td>
+                                <td>Branch #1</td>
+                                <td>Fuel Consumption</td>
+                                <td>Apr 1, 2025 - Apr 30, 2025</td>
+                                <td>Apr 10, 2025</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">View</button>
+                                    <button class="btn btn-sm btn-outline-secondary">Download</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>24</td>
+                                <td>Branch #2</td>
+                                <td>Sales Performance</td>
+                                <td>Apr 1, 2025 - Apr 30, 2025</td>
+                                <td>Apr 10, 2025</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">View</button>
+                                    <button class="btn btn-sm btn-outline-secondary">Download</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>23</td>
+                                <td>Branch #3</td>
+                                <td>Inventory Management</td>
+                                <td>Apr 1, 2025 - Apr 30, 2025</td>
+                                <td>Apr 9, 2025</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">View</button>
+                                    <button class="btn btn-sm btn-outline-secondary">Download</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>22</td>
+                                <td>All Branches</td>
+                                <td>Sales Performance</td>
+                                <td>Apr 1, 2025 - Apr 30, 2025</td>
+                                <td>Apr 8, 2025</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">View</button>
+                                    <button class="btn btn-sm btn-outline-secondary">Download</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>21</td>
+                                <td>Branch #1</td>
+                                <td>Fuel Consumption</td>
+                                <td>Mar 1, 2025 - Mar 31, 2025</td>
+                                <td>Apr 1, 2025</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">View</button>
+                                    <button class="btn btn-sm btn-outline-secondary">Download</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sales by Branch Chart
+    const salesByBranchCtx = document.getElementById('salesByBranchChart').getContext('2d');
+    new Chart(salesByBranchCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Branch #1', 'Branch #2', 'Branch #3'],
+            datasets: [{
+                data: [12500, 7800, 3200],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(75, 192, 192, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(75, 192, 192, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== undefined) {
+                                label += '₹' + context.parsed.toLocaleString();
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Branch Comparison Chart
+    const branchComparisonCtx = document.getElementById('branchComparisonChart').getContext('2d');
+    new Chart(branchComparisonCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [
+                {
+                    label: 'Branch #1',
+                    data: [3200, 3100, 3000, 3200],
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Branch #2',
+                    data: [2100, 1900, 2000, 1800],
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Branch #3',
+                    data: [800, 750, 900, 750],
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += '₹' + context.parsed.y.toLocaleString();
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Time range dropdown functionality
+    document.querySelectorAll('[data-range]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('timeRangeDropdown').textContent = this.textContent;
+            // Add active class to clicked item and remove from others
+            document.querySelectorAll('[data-range]').forEach(el => {
+                el.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // In a real app, you would fetch new data and update the chart here
+        });
+    });
+    
+    // Report type dropdown functionality
+    document.querySelectorAll('[data-type]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('reportTypeDropdown').textContent = this.textContent;
+            // Add active class to clicked item and remove from others
+            document.querySelectorAll('[data-type]').forEach(el => {
+                el.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // In a real app, you would filter the reports table here
+        });
+    });
+});
+</script>
+{% endblock %}

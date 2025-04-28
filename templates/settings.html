@@ -1,0 +1,265 @@
+
+{% extends "layout.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab">User Profile</button>
+                <button class="nav-link" id="nav-products-tab" data-bs-toggle="tab" data-bs-target="#nav-products" type="button" role="tab">Products</button>
+                <button class="nav-link" id="nav-branches-tab" data-bs-toggle="tab" data-bs-target="#nav-branches" type="button" role="tab">Branches</button>
+                <button class="nav-link" id="nav-users-tab" data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab">User Management</button>
+                <button class="nav-link" id="nav-notifications-tab" data-bs-toggle="tab" data-bs-target="#nav-notifications" type="button" role="tab">Notifications</button>
+                <button class="nav-link" id="nav-display-tab" data-bs-toggle="tab" data-bs-target="#nav-display" type="button" role="tab">Display</button>
+            </div>
+        </nav>
+        
+        <div class="tab-content mt-3" id="nav-tabContent">
+            <!-- Profile Tab -->
+            <div class="tab-pane fade show active" id="nav-profile" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">User Profile Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('settings_view') }}">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" disabled>
+                                    <div class="form-text text-muted">Username cannot be changed</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="full_name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" value="{{ current_user.full_name if current_user.full_name else '' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="role" class="form-label">Role</label>
+                                    <input type="text" class="form-control" id="role" value="{{ current_user.role }}" disabled>
+                                    <div class="form-text text-muted">Contact administrator to change roles</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <button type="submit" name="update_profile" class="btn btn-primary">Save Profile Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Change Password</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('settings_view') }}">
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">Current Password</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                    <div class="form-text">Password must be at least 8 characters long</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <button type="submit" name="change_password" class="btn btn-primary">Change Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Tab -->
+            <div class="tab-pane fade" id="nav-products" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Product Management</h5>
+                        <button class="btn btn-light btn-sm" onclick="window.location.href='/products'">
+                            <i class="fas fa-external-link-alt"></i> Open Products
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">Manage your products, categories, and inventory from the Products page.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Branches Tab -->
+            <div class="tab-pane fade" id="nav-branches" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Branch Management</h5>
+                        <button class="btn btn-light btn-sm" onclick="window.location.href='/branches'">
+                            <i class="fas fa-external-link-alt"></i> Open Branches
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">Manage your branch locations and settings from the Branches page.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Tab -->
+            <div class="tab-pane fade" id="nav-users" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">User Management</h5>
+                        <button class="btn btn-light btn-sm" onclick="window.location.href='/auth/users'">
+                            <i class="fas fa-external-link-alt"></i> Open User Management
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">Manage system users, roles and permissions from the User Management page.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notifications Tab -->
+            <div class="tab-pane fade" id="nav-notifications" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Notification Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('settings_view') }}">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" checked>
+                                <label class="form-check-label" for="email_notifications">Email Notifications</label>
+                                <div class="form-text text-muted">Receive important notifications via email</div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="sms_notifications" name="sms_notifications">
+                                <label class="form-check-label" for="sms_notifications">SMS Notifications</label>
+                                <div class="form-text text-muted">Receive urgent alerts via SMS</div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="whatsapp_notifications" name="whatsapp_notifications">
+                                <label class="form-check-label" for="whatsapp_notifications">WhatsApp Notifications</label>
+                                <div class="form-text text-muted">Receive reports and summaries via WhatsApp</div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <button type="submit" name="update_notifications" class="btn btn-primary">Save Notification Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display Tab -->
+            <div class="tab-pane fade" id="nav-display" role="tabpanel">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Display Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('settings_view') }}">
+                            <div class="mb-3">
+                                <label for="default_branch" class="form-label">Default Branch</label>
+                                <select class="form-select" id="default_branch" name="default_branch">
+                                    <option value="">Select default branch...</option>
+                                    <!-- Branches will be loaded dynamically -->
+                                </select>
+                                <div class="form-text text-muted">Set your default branch on login</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="date_format" class="form-label">Date Format</label>
+                                <select class="form-select" id="date_format" name="date_format">
+                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="items_per_page" class="form-label">Items Per Page</label>
+                                <select class="form-select" id="items_per_page" name="items_per_page">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <div class="form-text text-muted">Number of items to display in tables and lists</div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <button type="submit" name="update_preferences" class="btn btn-primary">Save Display Preferences</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load branches into default branch dropdown
+    const branchSelector = document.getElementById('default_branch');
+    const branches = JSON.parse(localStorage.getItem('branches') || '[]');
+    
+    if (branches.length > 0) {
+        branches.forEach(branch => {
+            const option = document.createElement('option');
+            option.value = branch.id;
+            option.textContent = branch.name;
+            branchSelector.appendChild(option);
+        });
+        
+        // Set current user's branch as selected if available
+        const currentBranch = localStorage.getItem('selectedBranch');
+        if (currentBranch && currentBranch !== 'all') {
+            branchSelector.value = currentBranch;
+        }
+    }
+    
+    // Form validation for password change
+    const passwordForm = document.querySelector('form:nth-of-type(2)');
+    passwordForm.addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (newPassword.length < 8) {
+            e.preventDefault();
+            alert('Password must be at least 8 characters long');
+            return false;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('New passwords do not match');
+            return false;
+        }
+        
+        return true;
+    });
+});
+</script>
+{% endblock %}

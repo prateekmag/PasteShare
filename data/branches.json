@@ -1,0 +1,50 @@
+[
+  {
+    "id": "SMBNC",
+    "name": "SUNDARAM MAHADEO (B. CHARIALI)",
+    "location": "NH 15 BISWANATH CHARIALI BISWANATH 784176 ASSAM",
+    "address": "NH 15 BISWANATH CHARIALI BISWANATH 784176 ASSAM",
+    "contact_phone": "9435188967",
+    "manager": "OM PRAKASH PAREEK",
+    "opening_time": "06:00",
+    "closing_time": "05:00",
+    "status": "active",
+    "created_at": "2025-04-12T18:45:15.006Z"
+  },
+  {
+    "id": "SMST",
+    "name": "SUNDARAM MAHADEO (SOOTEA)",
+    "location": "NH 15 SOOTEA BISWANATH 784176 ASSAM",
+    "address": "NH 15 SOOTEA BISWANATH 784176 ASSAM",
+    "contact_phone": "9435188967",
+    "manager": "RAM SINGH",
+    "opening_time": "06:00",
+    "closing_time": "05:00",
+    "status": "active",
+    "created_at": "2025-04-12T18:46:17.262Z"
+  },
+  {
+    "id": "SMGH",
+    "name": "SUNDARAM MAHADEO (GOHPUR)",
+    "location": "NH 15 GOHPUR NEAR AXIS BANK BISWANATH ASSAM 784176",
+    "address": "NH 15 GOHPUR NEAR AXIS BANK BISWANATH ASSAM 784176",
+    "contact_phone": "9435188967",
+    "manager": "LILADHAR",
+    "opening_time": "06:00",
+    "closing_time": "05:00",
+    "status": "active",
+    "created_at": "2025-04-14T11:04:10.419Z"
+  },
+  {
+    "id": "BR250427172024",
+    "name": "Prateek branch demo",
+    "location": "delhi",
+    "address": "delhi",
+    "contact_phone": "7982155967",
+    "manager": "prateek",
+    "opening_time": "06:00",
+    "closing_time": "22:00",
+    "status": "active",
+    "created_at": "2025-04-27T11:50:52.019Z"
+  }
+]

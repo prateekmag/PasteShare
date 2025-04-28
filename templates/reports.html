@@ -1,0 +1,932 @@
+{% extends "layout.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Generate Report</span>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="ai-toggle-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M19.13 5A10 10 0 0 0 12 2v8h8a10 10 0 0 0-.87-5Z"></path></svg>
+                        AI-Enhanced
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="generate-report-form">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="report-type" class="form-label">Report Type</label>
+                            <select class="form-select" id="report-type" name="report_type" required>
+                                <option value="">Select Report Type</option>
+                                <option value="fuel_consumption">Fuel Consumption</option>
+                                <option value="sales_performance">Sales Performance</option>
+                                <option value="inventory_management">Inventory Management</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="start-date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start-date" name="start_date" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="end-date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end-date" name="end_date" required>
+                        </div>
+                    </div>
+                    
+                    <div id="ai-options" class="mb-3 d-none">
+                        <label for="ai-prompt" class="form-label">AI Prompt (Optional)</label>
+                        <textarea class="form-control" id="ai-prompt" name="prompt" rows="2" placeholder="E.g., 'Analyze sales trends and suggest improvements' or 'Identify potential inventory optimization opportunities'"></textarea>
+                        <div class="form-text">Provide specific instructions for the AI to focus on in the report.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary" id="generate-report-btn">
+                            <span class="spinner-border spinner-border-sm d-none" id="report-spinner" role="status" aria-hidden="true"></span>
+                            Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Reports</span>
+                <div class="input-group input-group-sm" style="width: 200px">
+                    <select class="form-select" id="filter-report-type">
+                        <option value="">All Types</option>
+                        <option value="fuel_consumption">Fuel Consumption</option>
+                        <option value="sales_performance">Sales Performance</option>
+                        <option value="inventory_management">Inventory Management</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="reports-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Period</th>
+                                <th>Generated At</th>
+                                <th>AI Enhanced</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Reports will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center py-3" id="no-reports" style="display: none;">
+                    <p class="text-muted">No reports found. Generate a report to get started.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Viewer Modal -->
+<div class="modal fade" id="reportViewerModal" tabindex="-1" aria-labelledby="reportViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportViewerModalLabel">Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="report-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading report...</p>
+                </div>
+                
+                <div id="report-content" class="d-none">
+                    <!-- Standard Report Section -->
+                    <div id="standard-report">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h2 id="report-title">Report Title</h2>
+                                <p class="text-muted">
+                                    Period: <span id="report-period">Jan 1, 2025 - Jan 31, 2025</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <p class="text-muted">
+                                    Generated: <span id="report-generated-at">Feb 1, 2025</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Report sections will be dynamically generated based on report type -->
+                        <div id="report-data-sections">
+                        </div>
+                    </div>
+                    
+                    <!-- AI Report Section -->
+                    <div id="ai-report" class="d-none">
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M19.13 5A10 10 0 0 0 12 2v8h8a10 10 0 0 0-.87-5Z"></path></svg>
+                                    AI Summary
+                                </h4>
+                                <div id="ai-summary" class="mb-4">
+                                </div>
+                                
+                                <h5 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M12 2s.35-1 2-1 4 .35 4 2v1.5C18 5 17 7 12 7s-6-2-6-2.5V3c0-1.65 2.35-2 4-2 1.65 0 2 1 2 1Z"></path><path d="M12 18.5c-5 0-6-1.5-6-2V11"></path><path d="M12 14c-5 0-6-1.5-6-2V8"></path><path d="M18 8.5V17c0 .5-1 2-6 2s-6-1.5-6-2v-4"></path><path d="M15 5c-1 0-2 0-3 .15"></path></svg>
+                                    Recommendations
+                                </h5>
+                                <ul id="ai-recommendations">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="print-report-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    document.getElementById('start-date').value = formatDateForInput(startOfMonth);
+    document.getElementById('end-date').value = formatDateForInput(endOfMonth);
+    
+    // Load reports
+    loadReports();
+    
+    // Toggle AI options
+    document.getElementById('ai-toggle-btn').addEventListener('click', function() {
+        const aiOptions = document.getElementById('ai-options');
+        aiOptions.classList.toggle('d-none');
+        
+        // Change button appearance based on state
+        if (aiOptions.classList.contains('d-none')) {
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-outline-secondary');
+        } else {
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-primary');
+        }
+    });
+    
+    // Filter reports by type
+    document.getElementById('filter-report-type').addEventListener('change', function() {
+        loadReports(this.value);
+    });
+    
+    // Generate report form handler
+    document.getElementById('generate-report-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const reportType = formData.get('report_type');
+        const startDate = new Date(formData.get('start_date'));
+        const endDate = new Date(formData.get('end_date'));
+        const isAIEnabled = !document.getElementById('ai-options').classList.contains('d-none');
+        
+        // Validate dates
+        if (startDate > endDate) {
+            showAlert('Start date cannot be after end date', 'warning');
+            return;
+        }
+        
+        // Convert dates to ISO strings
+        const data = {
+            report_type: reportType,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString()
+        };
+        
+        // Add AI prompt if enabled
+        if (isAIEnabled) {
+            const prompt = formData.get('prompt');
+            if (prompt) {
+                data.prompt = prompt;
+            }
+        }
+        
+        // Determine endpoint
+        let endpoint = '';
+        if (isAIEnabled) {
+            switch(reportType) {
+                case 'fuel_consumption':
+                    endpoint = '/api/reports/ai/fuel-consumption';
+                    break;
+                case 'sales_performance':
+                    endpoint = '/api/reports/ai/sales';
+                    break;
+                case 'inventory_management':
+                    endpoint = '/api/reports/ai/inventory';
+                    break;
+            }
+        } else {
+            switch(reportType) {
+                case 'fuel_consumption':
+                    endpoint = '/api/reports/fuel-consumption';
+                    break;
+                case 'sales_performance':
+                    endpoint = '/api/reports/sales';
+                    break;
+                case 'inventory_management':
+                    endpoint = '/api/reports/inventory';
+                    break;
+            }
+        }
+        
+        // Show loading state
+        const button = document.getElementById('generate-report-btn');
+        const spinner = document.getElementById('report-spinner');
+        button.disabled = true;
+        spinner.classList.remove('d-none');
+        
+        // Generate report
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Reset button state
+            button.disabled = false;
+            spinner.classList.add('d-none');
+            
+            if (result.status === 'success') {
+                showAlert('Report generated successfully!', 'success');
+                loadReports();
+                
+                // Open the report
+                viewReport(result.report_id);
+            } else {
+                showAlert('Error: ' + result.message, 'danger');
+            }
+        })
+        .catch(error => {
+            // Reset button state
+            button.disabled = false;
+            spinner.classList.add('d-none');
+            
+            showAlert('Error: ' + error.message, 'danger');
+        });
+    });
+    
+    // Print report button handler
+    document.getElementById('print-report-btn').addEventListener('click', function() {
+        window.print();
+    });
+});
+
+// Format date for input field
+function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Load reports
+function loadReports(reportType = '') {
+    let url = '/api/reports';
+    if (reportType) {
+        url += `?report_type=${reportType}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector('#reports-table tbody');
+            
+            // Clear table
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                document.getElementById('no-reports').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('no-reports').style.display = 'none';
+            
+            // Add reports to table
+            data.forEach(report => {
+                const row = document.createElement('tr');
+                
+                // Format dates
+                const startDate = new Date(report.start_date);
+                const endDate = new Date(report.end_date);
+                const generatedAt = new Date(report.generated_at);
+                
+                // Determine if it's an AI report
+                const isAIReport = report.hasOwnProperty('summary') || report.hasOwnProperty('recommendations');
+                
+                row.innerHTML = `
+                    <td>${report.id}</td>
+                    <td class="text-capitalize">${formatReportType(report.report_type)}</td>
+                    <td>${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}</td>
+                    <td>${generatedAt.toLocaleString()}</td>
+                    <td>${isAIReport ? 
+                        '<span class="badge bg-primary">AI Enhanced</span>' : 
+                        '<span class="badge bg-secondary">Standard</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary view-report-btn" data-report-id="${report.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            View
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners for view buttons
+            document.querySelectorAll('.view-report-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const reportId = this.getAttribute('data-report-id');
+                    viewReport(reportId);
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error loading reports:', error);
+            document.getElementById('no-reports').style.display = 'block';
+            document.getElementById('no-reports').innerHTML = `<p class="text-danger">Error loading reports: ${error.message}</p>`;
+        });
+}
+
+// View report
+function viewReport(reportId) {
+    // Show modal with loading state
+    const modal = new bootstrap.Modal(document.getElementById('reportViewerModal'));
+    modal.show();
+    
+    document.getElementById('report-loading').style.display = 'block';
+    document.getElementById('report-content').classList.add('d-none');
+    
+    fetch(`/api/reports/${reportId}`)
+        .then(response => response.json())
+        .then(report => {
+            // Hide loading, show content
+            document.getElementById('report-loading').style.display = 'none';
+            document.getElementById('report-content').classList.remove('d-none');
+            
+            // Format report title based on type
+            let title = '';
+            switch(report.report_type) {
+                case 'fuel_consumption':
+                    title = 'Fuel Consumption Report';
+                    break;
+                case 'sales_performance':
+                    title = 'Sales Performance Report';
+                    break;
+                case 'inventory_management':
+                    title = 'Inventory Management Report';
+                    break;
+                default:
+                    title = 'Report';
+            }
+            
+            // Update modal title and report metadata
+            document.getElementById('reportViewerModalLabel').textContent = title;
+            document.getElementById('report-title').textContent = title;
+            
+            // Format period dates
+            const startDate = new Date(report.start_date);
+            const endDate = new Date(report.end_date);
+            document.getElementById('report-period').textContent = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+            
+            // Format generated date
+            const generatedAt = new Date(report.generated_at);
+            document.getElementById('report-generated-at').textContent = generatedAt.toLocaleString();
+            
+            // Generate report sections based on type
+            const sectionsContainer = document.getElementById('report-data-sections');
+            sectionsContainer.innerHTML = '';
+            
+            // Determine if it's an AI report
+            const isAIReport = report.hasOwnProperty('summary') || report.hasOwnProperty('recommendations');
+            
+            if (isAIReport) {
+                // Show AI section
+                document.getElementById('ai-report').classList.remove('d-none');
+                
+                // Add AI summary
+                document.getElementById('ai-summary').innerHTML = `<p>${report.summary}</p>`;
+                
+                // Add recommendations
+                const recommendationsList = document.getElementById('ai-recommendations');
+                recommendationsList.innerHTML = '';
+                
+                if (report.recommendations && report.recommendations.length > 0) {
+                    report.recommendations.forEach(rec => {
+                        const li = document.createElement('li');
+                        li.className = 'mb-2';
+                        li.textContent = rec;
+                        recommendationsList.appendChild(li);
+                    });
+                } else {
+                    recommendationsList.innerHTML = '<li>No specific recommendations available.</li>';
+                }
+            } else {
+                // Hide AI section for standard reports
+                document.getElementById('ai-report').classList.add('d-none');
+            }
+            
+            // Generate report sections based on data
+            if (report.data) {
+                // Create sections based on report type
+                switch(report.report_type) {
+                    case 'fuel_consumption':
+                        createFuelConsumptionSections(report.data, sectionsContainer);
+                        break;
+                    case 'sales_performance':
+                        createSalesPerformanceSections(report.data, sectionsContainer);
+                        break;
+                    case 'inventory_management':
+                        createInventoryManagementSections(report.data, sectionsContainer);
+                        break;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading report:', error);
+            document.getElementById('report-loading').style.display = 'none';
+            document.getElementById('report-content').classList.remove('d-none');
+            document.getElementById('report-data-sections').innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading report: ${error.message}
+                </div>
+            `;
+        });
+}
+
+// Create fuel consumption report sections
+function createFuelConsumptionSections(data, container) {
+    // Fuel Received Section
+    const fuelReceivedSection = document.createElement('div');
+    fuelReceivedSection.className = 'mb-4';
+    fuelReceivedSection.innerHTML = `
+        <h4>Fuel Received</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Tank ID</th>
+                        <th>Deliveries</th>
+                        <th>Total Received (L)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.fuel_received.map(item => `
+                        <tr>
+                            <td>${item.tank_id}</td>
+                            <td>${item.delivery_count}</td>
+                            <td>${item.total_received.toFixed(1)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>Total</td>
+                        <td>${data.fuel_received.reduce((sum, item) => sum + item.delivery_count, 0)}</td>
+                        <td>${data.fuel_received.reduce((sum, item) => sum + item.total_received, 0).toFixed(1)} L</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    container.appendChild(fuelReceivedSection);
+    
+    // Fuel Sold Section
+    const fuelSoldSection = document.createElement('div');
+    fuelSoldSection.className = 'mb-4';
+    fuelSoldSection.innerHTML = `
+        <h4>Fuel Sold</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Fuel Type</th>
+                        <th>Transactions</th>
+                        <th>Total Sold (L)</th>
+                        <th>Total Sales ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.fuel_sold.map(item => `
+                        <tr>
+                            <td>${item.fuel_type}</td>
+                            <td>${item.transaction_count}</td>
+                            <td>${item.total_sold.toFixed(1)}</td>
+                            <td>$${item.total_sales.toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>Total</td>
+                        <td>${data.fuel_sold.reduce((sum, item) => sum + item.transaction_count, 0)}</td>
+                        <td>${data.fuel_sold.reduce((sum, item) => sum + item.total_sold, 0).toFixed(1)} L</td>
+                        <td>$${data.fuel_sold.reduce((sum, item) => sum + item.total_sales, 0).toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    container.appendChild(fuelSoldSection);
+    
+    // Current Levels Section
+    const currentLevelsSection = document.createElement('div');
+    currentLevelsSection.className = 'mb-4';
+    currentLevelsSection.innerHTML = `
+        <h4>Current Tank Levels</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Tank ID</th>
+                        <th>Fuel Type</th>
+                        <th>Capacity (L)</th>
+                        <th>Current Level (L)</th>
+                        <th>Utilization</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.current_levels.map(item => {
+                        const utilization = (item.current_level / item.capacity) * 100;
+                        const utilizationClass = utilization < 20 ? 'bg-danger' : utilization < 50 ? 'bg-warning' : 'bg-success';
+                        
+                        return `
+                            <tr>
+                                <td>${item.id}</td>
+                                <td>${item.fuel_type}</td>
+                                <td>${item.capacity.toFixed(1)}</td>
+                                <td>${item.current_level.toFixed(1)}</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar ${utilizationClass}" 
+                                            role="progressbar" style="width: ${utilization}%" 
+                                            aria-valuenow="${utilization}" aria-valuemin="0" aria-valuemax="100">
+                                            ${utilization.toFixed(1)}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    container.appendChild(currentLevelsSection);
+}
+
+// Create sales performance report sections
+function createSalesPerformanceSections(data, container) {
+    // Sales Summary Section
+    const salesSummarySection = document.createElement('div');
+    salesSummarySection.className = 'mb-4';
+    salesSummarySection.innerHTML = `
+        <h4>Sales Summary</h4>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Sales</h5>
+                        <h2 class="display-5">$${data.totals?.sales_amount?.toFixed(2) || "0.00"}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Fuel Volume</h5>
+                        <h2 class="display-5">${data.totals?.fuel_volume?.toFixed(1) || "0.0"} L</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Transactions</h5>
+                        <h2 class="display-5">${data.totals?.transaction_count || "0"}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(salesSummarySection);
+    
+    // Payment Methods Section
+    if (data.payment_methods && data.payment_methods.length > 0) {
+        const paymentMethodsSection = document.createElement('div');
+        paymentMethodsSection.className = 'mb-4';
+        paymentMethodsSection.innerHTML = `
+            <h4>Sales by Payment Method</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Payment Method</th>
+                            <th>Transactions</th>
+                            <th>Volume (L)</th>
+                            <th>Total Sales ($)</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.payment_methods.map(item => {
+                            const percentage = (item.total_sales / data.totals.sales_amount) * 100;
+                            
+                            return `
+                                <tr>
+                                    <td class="text-capitalize">${item.payment_method}</td>
+                                    <td>${item.transaction_count}</td>
+                                    <td>${item.total_volume.toFixed(1)}</td>
+                                    <td>$${item.total_sales.toFixed(2)}</td>
+                                    <td>${percentage.toFixed(1)}%</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        container.appendChild(paymentMethodsSection);
+    }
+    
+    // Attendant Performance Section
+    if (data.attendant_performance && data.attendant_performance.length > 0) {
+        const attendantSection = document.createElement('div');
+        attendantSection.className = 'mb-4';
+        attendantSection.innerHTML = `
+            <h4>Sales by Attendant</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Transactions</th>
+                            <th>Volume (L)</th>
+                            <th>Total Sales ($)</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.attendant_performance.map(item => {
+                            const percentage = (item.total_sales / data.totals.sales_amount) * 100;
+                            
+                            return `
+                                <tr>
+                                    <td>${item.attendant}</td>
+                                    <td>${item.attendant_name || 'N/A'}</td>
+                                    <td>${item.transaction_count}</td>
+                                    <td>${item.total_volume.toFixed(1)}</td>
+                                    <td>$${item.total_sales.toFixed(2)}</td>
+                                    <td>${percentage.toFixed(1)}%</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        container.appendChild(attendantSection);
+    }
+    
+    // Daily Sales Section
+    if (data.daily_totals && data.daily_totals.length > 0) {
+        const dailySection = document.createElement('div');
+        dailySection.className = 'mb-4';
+        dailySection.innerHTML = `
+            <h4>Daily Sales</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Transactions</th>
+                            <th>Volume (L)</th>
+                            <th>Total Sales ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.daily_totals.map(item => {
+                            const date = new Date(item.date);
+                            return `
+                                <tr>
+                                    <td>${date.toLocaleDateString()}</td>
+                                    <td>${item.transaction_count}</td>
+                                    <td>${item.total_volume.toFixed(1)}</td>
+                                    <td>$${item.total_sales.toFixed(2)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        container.appendChild(dailySection);
+    }
+}
+
+// Create inventory management sections
+function createInventoryManagementSections(data, container) {
+    // Inventory Summary Section
+    const inventorySummarySection = document.createElement('div');
+    inventorySummarySection.className = 'mb-4';
+    
+    // Calculate total capacity and current inventory
+    const totalCapacity = data.tanks.reduce((sum, tank) => sum + tank.capacity, 0);
+    const totalInventory = data.tanks.reduce((sum, tank) => sum + tank.current_level, 0);
+    const inventoryPercentage = (totalInventory / totalCapacity) * 100;
+    
+    inventorySummarySection.innerHTML = `
+        <h4>Inventory Summary</h4>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total Capacity</h5>
+                        <h2 class="display-5">${totalCapacity.toFixed(1)} L</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Current Inventory</h5>
+                        <h2 class="display-5">${totalInventory.toFixed(1)} L</h2>
+                        <div class="progress mt-2">
+                            <div class="progress-bar ${inventoryPercentage < 20 ? 'bg-danger' : inventoryPercentage < 50 ? 'bg-warning' : 'bg-success'}" 
+                                role="progressbar" style="width: ${inventoryPercentage}%" 
+                                aria-valuenow="${inventoryPercentage}" aria-valuemin="0" aria-valuemax="100">
+                                ${inventoryPercentage.toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(inventorySummarySection);
+    
+    // Tank Details Section
+    const tankDetailsSection = document.createElement('div');
+    tankDetailsSection.className = 'mb-4';
+    tankDetailsSection.innerHTML = `
+        <h4>Tank Details</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Tank ID</th>
+                        <th>Fuel Type</th>
+                        <th>Capacity (L)</th>
+                        <th>Current Level (L)</th>
+                        <th>Status</th>
+                        <th>Utilization</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.tanks.map(tank => {
+                        const utilization = (tank.current_level / tank.capacity) * 100;
+                        const utilizationClass = utilization < 20 ? 'bg-danger' : utilization < 50 ? 'bg-warning' : 'bg-success';
+                        const statusClass = tank.status === 'active' ? 'success' : tank.status === 'maintenance' ? 'warning' : 'danger';
+                        
+                        return `
+                            <tr>
+                                <td>${tank.id}</td>
+                                <td>${tank.fuel_type}</td>
+                                <td>${tank.capacity.toFixed(1)}</td>
+                                <td>${tank.current_level.toFixed(1)}</td>
+                                <td><span class="badge bg-${statusClass}">${tank.status}</span></td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar ${utilizationClass}" 
+                                            role="progressbar" style="width: ${utilization}%" 
+                                            aria-valuenow="${utilization}" aria-valuemin="0" aria-valuemax="100">
+                                            ${utilization.toFixed(1)}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    container.appendChild(tankDetailsSection);
+    
+    // Recent Activities Section
+    if (data.recent_activities && data.recent_activities.length > 0) {
+        const activitiesSection = document.createElement('div');
+        activitiesSection.className = 'mb-4';
+        activitiesSection.innerHTML = `
+            <h4>Recent Inventory Activities</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Tank</th>
+                            <th>Activity</th>
+                            <th>Amount (L)</th>
+                            <th>Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.recent_activities.map(activity => {
+                            const date = new Date(activity.timestamp);
+                            
+                            return `
+                                <tr>
+                                    <td>${date.toLocaleString()}</td>
+                                    <td>${activity.tank_id}</td>
+                                    <td>${activity.type}</td>
+                                    <td>${activity.amount.toFixed(1)}</td>
+                                    <td>${activity.employee_id}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        container.appendChild(activitiesSection);
+    }
+}
+
+// Format report type for display
+function formatReportType(type) {
+    switch(type) {
+        case 'fuel_consumption':
+            return 'Fuel Consumption';
+        case 'sales_performance':
+            return 'Sales Performance';
+        case 'inventory_management':
+            return 'Inventory Management';
+        default:
+            return type.replace('_', ' ');
+    }
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+    const alertsContainer = document.createElement('div');
+    alertsContainer.className = 'position-fixed top-0 end-0 p-3';
+    alertsContainer.style.zIndex = '1050';
+    
+    const alertHtml = `
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">PetrolPro</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body bg-${type} text-white">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    alertsContainer.innerHTML = alertHtml;
+    document.body.appendChild(alertsContainer);
+    
+    // Remove the alert after 5 seconds
+    setTimeout(() => {
+        alertsContainer.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

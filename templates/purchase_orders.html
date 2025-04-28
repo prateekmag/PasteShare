@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+
+{% block title %}Purchase Orders{% endblock %}
+
+{% block page_title %}Purchase Orders{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between">
+            <div>
+                <a href="{{ url_for('purchase_orders_view') }}" class="btn btn-outline-primary active">All Orders</a>
+                <a href="{{ url_for('purchase_orders_view', status='pending') }}" class="btn btn-outline-secondary">Pending</a>
+                <a href="{{ url_for('purchase_orders_view', status='approved') }}" class="btn btn-outline-success">Approved</a>
+                <a href="{{ url_for('purchase_orders_view', status='completed') }}" class="btn btn-outline-info">Completed</a>
+                <a href="{{ url_for('purchase_orders_view', status='rejected') }}" class="btn btn-outline-danger">Rejected</a>
+            </div>
+            <div>
+                <a href="{{ url_for('create_purchase_order_view') }}" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Purchase Order
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Purchase Orders</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Branch</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Total Amount</th>
+                                <th>Requested By</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Supplier</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchase-orders-table">
+                            <tr>
+                                <td colspan="11" class="text-center">Loading purchase orders...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load purchase orders when the page loads
+    loadPurchaseOrders();
+    
+    // Function to load purchase orders from the API
+    function loadPurchaseOrders() {
+        const tableBody = document.getElementById('purchase-orders-table');
+        const branchSelector = document.getElementById('branch-selector');
+        const branch = branchSelector ? branchSelector.value : null;
+        let url = '{{ url_for("get_purchase_orders") }}';
+        
+        // Add filters based on URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
+        
+        const queryParams = new URLSearchParams();
+        if (branch && branch !== 'all') {
+            queryParams.append('branch_id', branch);
+        }
+        
+        if (status) {
+            queryParams.append('status', status);
+        }
+        
+        if (queryParams.toString()) {
+            url += '?' + queryParams.toString();
+        }
+        
+        fetch(url, { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="11" class="text-center">No purchase orders found</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                data.forEach(order => {
+                    const date = new Date(order.timestamp).toLocaleDateString();
+                    const statusBadgeClass = getStatusBadgeClass(order.status);
+                    const paymentBadgeClass = getPaymentBadgeClass(order.payment_status);
+                    
+                    html += `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.branch_id}</td>
+                        <td>${order.product_type}</td>
+                        <td>${order.quantity.toFixed(2)}</td>
+                        <td>₹${order.total_amount.toFixed(2)}</td>
+                        <td>${order.requested_by}</td>
+                        <td><span class="badge ${statusBadgeClass}">${order.status}</span></td>
+                        <td><span class="badge ${paymentBadgeClass}">${order.payment_status}</span></td>
+                        <td>${order.supplier || 'N/A'}</td>
+                        <td>${date}</td>
+                        <td>
+                            <a href="{{ url_for("view_purchase_order", order_id=0) }}${order.id}" class="btn btn-sm btn-info">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </a>
+                        </td>
+                    </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error fetching purchase orders:', error);
+                tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading purchase orders</td></tr>';
+            });
+    }
+    
+    // Function to get the appropriate bootstrap badge class for order status
+    function getStatusBadgeClass(status) {
+        switch (status) {
+            case 'pending':
+                return 'bg-warning text-dark';
+            case 'approved':
+                return 'bg-success';
+            case 'rejected':
+                return 'bg-danger';
+            case 'completed':
+                return 'bg-info';
+            default:
+                return 'bg-secondary';
+        }
+    }
+    
+    // Function to get the appropriate bootstrap badge class for payment status
+    function getPaymentBadgeClass(status) {
+        switch (status) {
+            case 'pending':
+                return 'bg-warning text-dark';
+            case 'partial':
+                return 'bg-primary';
+            case 'completed':
+                return 'bg-success';
+            default:
+                return 'bg-secondary';
+        }
+    }
+    
+    // Reload purchase orders when the branch selector changes
+    const branchSelector = document.getElementById('branch-selector');
+    if (branchSelector) {
+        branchSelector.addEventListener('change', function() {
+            loadPurchaseOrders();
+        });
+    }
+});
+</script>
+{% endblock %}

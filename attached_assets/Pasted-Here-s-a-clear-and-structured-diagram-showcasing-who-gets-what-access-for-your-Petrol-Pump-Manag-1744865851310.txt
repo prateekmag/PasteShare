@@ -1,0 +1,75 @@
+Here's a clear and structured **diagram showcasing who gets what access** for your Petrol Pump Management Application:  
+
+```
++-----------------------------------------------------------------------------------------------------+
+|                           Petrol Pump Management App - Access Level Diagram                         |
++-----------------------------------------------------------------------------------------------------+
+                                                |
+                                                v
+                                +-----------------------------+
+                                |         LOGIN TYPES         |
+                                +-----------------------------+
+                                  |            |            |
+             +--------------------+            |            +----------------------+
+             |                                 |                                   |
+             v                                 v                                   v
++------------------------+          +----------------------+            +------------------------+
+|      ADMIN USER        |          |     BRANCH USER      |            |     PUMPMAN USER       |
+| (Full Overview Access) |          | (Branch Level Access)|            |  (Limited Individual   |
++------------------------+          +----------------------+            |       Access)          |
+|                                    |                                  +------------------------+
+| Admin Dashboard                    | Branch Dashboard                  | Pumpman Dashboard     
+| (Collated All Branches)            | (Only respective branch data)     | (Individual Sales Data)
+| - Dashboard (Combined, View only)  | - Dashboard                       | - Individual Dashboard
+| - Total Staff (View only)          | - Fuel Management                 | - Individual Sales Entry
+| - Fuel Management (View only)      | - Sales                           | - Attendance (Photo Entry, Time)
+| - Sales (View only)                | - Staff                           | - Totalizer Readings (Daily entry)
+| - Attendance (View only)           | - Attendance                      
+| - Expenses (View only)             | - Expenses                        
+| - Reports (View only)              | - Reports                         
+| - AI Analytics (View only)         | - AI Analytics                    
+| - Purchase Order (View only)       | - Purchase Order                  
+| - Daily Checklist (View only)      | - Daily Checklist                 
+| - Totalizers Reading (Combined,    | - Totalizers Reading              
+|   non-editable)                    |   (Editable, Branch Specific)     
+|                                    |                                   
+| Branch Dashboards                  |                                   
+| (Each Branch Separately Editable)  |                                   
+| - Dashboard                        |                                   
+| - Total Staff                      |                                   
+| - Fuel Management                  |                                   
+| - Sales                            |                                   
+| - Attendance                       |                                   
+| - Expenses                         |                                   
+| - Reports                          |                                   
+| - AI Analytics                     |                                   
+| - Purchase Order                   |                                   
+| - Daily Checklist                  |                                   
+| - Totalizers Reading               |                                   
+| (Editable by Admin for Each Branch)|                                   
++------------------------------------+-----------------------------------+-------------------------+
+```
+
+---
+
+### 🔑 Explanation of Roles & Permissions:
+
+### 1. **Admin User**
+- Has full viewing access to dashboards collated from all branches.
+- **Cannot edit** the combined (collated) data directly.
+- Can access and **edit individual branch dashboards separately**.
+
+### 2. **Branch User**
+- Access only to their **specific branch data**.
+- Can manage and edit all operational data related specifically to their branch.
+
+### 3. **Pumpman User**
+- Limited dashboard access focused solely on **individual operations**.
+- Responsible for their own **attendance and sales** data entry with:
+  - Photo verification
+  - Timestamp entries
+  - Daily totalizer readings
+
+---
+
+This diagram and explanation clearly outline the access structure for different user roles in your Petrol Pump Management Application.

@@ -1,0 +1,174 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Purchase Order{% endblock %}
+
+{% block page_title %}Create Purchase Order{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('purchase_orders_view') }}" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Purchase Orders
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">New Purchase Order</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('create_purchase_order_view') }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="branch" class="form-label">Branch</label>
+                            <select class="form-control" id="branch" name="branch" required>
+                                <option value="">Select Branch</option>
+                                {% for branch in branches %}
+                                    <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="product_type" class="form-label">Product Type</label>
+                            <select class="form-select" id="product_type" name="product_type" required>
+                                <option value="">Select Product</option>
+                                <optgroup label="Fuel">
+                                    <option value="Regular">Regular</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Diesel">Diesel</option>
+                                </optgroup>
+                                <optgroup label="Lubricants">
+                                    <option value="Engine Oil">Engine Oil</option>
+                                    <option value="Transmission Fluid">Transmission Fluid</option>
+                                    <option value="Brake Fluid">Brake Fluid</option>
+                                </optgroup>
+                                <optgroup label="Accessories">
+                                    <option value="Car Fresheners">Car Fresheners</option>
+                                    <option value="Wiper Blades">Wiper Blades</option>
+                                    <option value="Car Care Products">Car Care Products</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="0" step="0.01" required>
+                            <small class="text-muted">In liters for fuel, units for other products</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="unit_price" class="form-label">Unit Price (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" id="unit_price" name="unit_price" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="supplier" class="form-label">Supplier</label>
+                        <select class="form-control" id="supplier" name="supplier" required>
+                            <option value="">Select Supplier</option>
+                            {% for supplier in suppliers %}
+                                {% if supplier.status == 'active' %}
+                                <option value="{{ supplier.name }}">{{ supplier.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expected_delivery_date" class="form-label">Expected Delivery Date</label>
+                        <input type="date" class="form-control" id="expected_delivery_date" name="expected_delivery_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="requested_by" class="form-label">Requested By</label>
+                        <input type="text" class="form-control" id="requested_by" name="requested_by" value="{{ requested_by_user.full_name or requested_by_user.username }}" readonly required>
+                        <input type="hidden" name="requested_by_username" value="{{ requested_by_user.username }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info" id="total-amount-display">
+                        <strong>Total Amount:</strong> ₹0.00
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ url_for('purchase_orders_view') }}';">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Purchase Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Instructions</h5>
+            </div>
+            <div class="card-body">
+                <p>Create a purchase order to request products for your branch. After submission, the order will need approval from the admin.</p>
+                <h6 class="mt-3">Process:</h6>
+                <ol>
+                    <li>Fill in all required details</li>
+                    <li>Submit the purchase order</li>
+                    <li>Wait for admin approval</li>
+                    <li>Track payment status</li>
+                    <li>Mark as completed when products are received</li>
+                </ol>
+                <div class="alert alert-warning">
+                    <strong>Note:</strong> All fuel orders require admin approval before they can be processed.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.getElementById('quantity');
+    const unitPriceInput = document.getElementById('unit_price');
+    const totalAmountDisplay = document.getElementById('total-amount-display');
+    
+    // Function to calculate and display total amount
+    function updateTotalAmount() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(unitPriceInput.value) || 0;
+        const totalAmount = quantity * unitPrice;
+        
+        totalAmountDisplay.innerHTML = `<strong>Total Amount:</strong> ₹${totalAmount.toFixed(2)}`;
+        
+        // Change the alert color based on the amount
+        if (totalAmount > 10000) {
+            totalAmountDisplay.className = 'alert alert-danger';
+        } else if (totalAmount > 5000) {
+            totalAmountDisplay.className = 'alert alert-warning';
+        } else {
+            totalAmountDisplay.className = 'alert alert-info';
+        }
+    }
+    
+    // Update total amount when quantity or unit price changes
+    quantityInput.addEventListener('input', updateTotalAmount);
+    unitPriceInput.addEventListener('input', updateTotalAmount);
+    
+    // Set branch to the currently selected branch in the sidebar
+    const selectedBranch = document.getElementById('branch-selector').value;
+    if (selectedBranch && selectedBranch !== 'all') {
+        document.getElementById('branch').value = selectedBranch;
+    }
+})
+</script>
+{% endblock %}

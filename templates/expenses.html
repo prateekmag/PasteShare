@@ -1,0 +1,2069 @@
+{% extends "layout.html" %}
+
+{% block title %}Expense Management{% endblock %}
+
+{% block page_title %}Expense Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs" id="expenseTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab" aria-controls="add" aria-selected="false">Add Expense</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">Expense History</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories" type="button" role="tab" aria-controls="categories" aria-selected="false">Categories</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab" aria-controls="reports" aria-selected="false">Reports</button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="tab-content" id="expenseTabContent">
+    <!-- Overview Tab -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+        <div class="row mb-4">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>This Month's Expenses</span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                April 2025
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="timeRangeDropdown">
+                                <li><a class="dropdown-item" href="#">April 2025</a></li>
+                                <li><a class="dropdown-item" href="#">March 2025</a></li>
+                                <li><a class="dropdown-item" href="#">February 2025</a></li>
+                                <li><a class="dropdown-item" href="#">Custom Range...</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                        <div class="display-4 mb-3" id="total-expense-amount">₹7,842.50</div>
+                        <div class="text-muted mb-3">vs <span class="text-danger">+12.3%</span> last month</div>
+                        <div class="d-flex justify-content-between w-100 mt-3">
+                            <div class="text-center">
+                                <div class="fw-bold" id="operational-expenses">₹4,215.75</div>
+                                <small class="text-muted">Operational</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="fw-bold" id="maintenance-expenses">₹2,316.30</div>
+                                <small class="text-muted">Maintenance</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="fw-bold" id="admin-expenses">₹1,310.45</div>
+                                <small class="text-muted">Administrative</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Expense Trends</span>
+                        <div class="btn-group" role="group" aria-label="Trend time range">
+                            <button type="button" class="btn btn-sm btn-outline-secondary active trend-btn" data-range="week">Week</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary trend-btn" data-range="month">Month</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary trend-btn" data-range="quarter">Quarter</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary trend-btn" data-range="year">Year</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="expense-trend-chart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Expense Distribution by Category</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="category-distribution-chart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Recent Expenses</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-expenses-table">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="no-recent-expenses" class="text-center py-3 d-none">
+                            <p class="text-muted">No recent expenses found</p>
+                        </div>
+                        <div id="loading-recent-expenses" class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="#" class="btn btn-sm btn-outline-primary" id="view-all-expenses-btn">View All Expenses</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Budget Overview</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Operational</span>
+                                <span>₹4,215.75 / ₹5,000.00</span>
+                            </div>
+                            <div class="progress mb-1" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 84%" aria-valuenow="84" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">84.3% of monthly budget used</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Maintenance</span>
+                                <span>₹2,316.30 / ₹2,500.00</span>
+                            </div>
+                            <div class="progress mb-1" style="height: 10px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 93%" aria-valuenow="93" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">92.7% of monthly budget used</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Administrative</span>
+                                <span>₹1,310.45 / ₹1,500.00</span>
+                            </div>
+                            <div class="progress mb-1" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 87%" aria-valuenow="87" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">87.4% of monthly budget used</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Utilities</span>
+                                <span>₹725.60 / ₹1,000.00</span>
+                            </div>
+                            <div class="progress mb-1" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 73%" aria-valuenow="73" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">72.6% of monthly budget used</small>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="#" class="btn btn-sm btn-outline-primary" id="manage-budgets-btn">Manage Budgets</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Expense Approvals</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Fuel Pump Maintenance</h6>
+                                    <span class="badge bg-warning">Pending</span>
+                                </div>
+                                <p class="mb-1">₹567.89</p>
+                                <small class="text-muted">Requested by David Martinez on Apr 10</small>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Office Supplies</h6>
+                                    <span class="badge bg-warning">Pending</span>
+                                </div>
+                                <p class="mb-1">₹123.45</p>
+                                <small class="text-muted">Requested by Sarah Williams on Apr 9</small>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Tank Inspection</h6>
+                                    <span class="badge bg-success">Approved</span>
+                                </div>
+                                <p class="mb-1">₹892.50</p>
+                                <small class="text-muted">Approved by John Peterson on Apr 8</small>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Cleaning Services</h6>
+                                    <span class="badge bg-danger">Rejected</span>
+                                </div>
+                                <p class="mb-1">₹350.00</p>
+                                <small class="text-muted">Rejected by John Peterson on Apr 7</small>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="#" class="btn btn-sm btn-outline-primary" id="view-all-approvals-btn">View All Approvals</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Quick Insights</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <div class="d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                <div>
+                                    <h6 class="alert-heading">Maintenance Budget Alert</h6>
+                                    <p class="mb-0">Maintenance expenses are at 92.7% of monthly budget with 18 days remaining.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Highest Expense Category</h6>
+                                <p class="card-text">Fuel Pump Maintenance accounts for 32% of all expenses this month.</p>
+                            </div>
+                        </div>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Expense Growth</h6>
+                                <p class="card-text">Operational expenses have increased by 12.3% compared to last month.</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Cost Saving Opportunity</h6>
+                                <p class="card-text">Switching utility providers could save up to ₹250 monthly based on current usage patterns.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Expense Tab -->
+    <div class="tab-pane fade" id="add" role="tabpanel" aria-labelledby="add-tab">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Add New Expense</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="add-expense-form">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="expense-description" class="form-label">Description <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="expense-description" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="expense-amount" class="form-label">Amount <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" class="form-control" id="expense-amount" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="expense-date" class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="expense-date" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="expense-category" class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="expense-category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="operational">Operational</option>
+                                        <option value="administrative">Administrative</option>
+                                        <option value="utilities">Utilities</option>
+                                        <option value="taxes">Taxes</option>
+                                        <option value="salaries">Salaries</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="expense-employee" class="form-label">Employee <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="expense-employee" name="employee" required>
+                                        {% for emp in employees %}
+                                            {% if emp.is_active %}
+                                                <option value="{{ emp.username }}">{{ emp.full_name or emp.username }} ({{ emp.role|capitalize }}) [{{ emp.branch_id }}]</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="expense-payment-method" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="expense-payment-method">
+                                        <option value="">Select Payment Method</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="credit_card">Credit Card</option>
+                                        <option value="debit_card">Debit Card</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="mobile_payment">Mobile Payment</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="expense-notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="expense-notes" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="expense-receipt" class="form-label">Receipt (Optional)</label>
+                                    <input type="file" class="form-control" id="expense-receipt">
+                                    <div class="form-text">Upload a photo or scan of the receipt (PDF, JPG, PNG, max 5MB)</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="expense-recurring">
+                                        <label class="form-check-label" for="expense-recurring">
+                                            This is a recurring expense
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="recurring-options" class="row mt-3 mb-3 d-none">
+                                <div class="col-md-6">
+                                    <label for="recurring-frequency" class="form-label">Frequency</label>
+                                    <select class="form-select" id="recurring-frequency">
+                                        <option value="weekly">Weekly</option>
+                                        <option value="biweekly">Bi-weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="annually">Annually</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="recurring-end-date" class="form-label">End Date (Optional)</label>
+                                    <input type="date" class="form-control" id="recurring-end-date">
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save Expense</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <span>Expense Entry Tips</span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-primary"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                <div>
+                                    <strong>Choose the right category</strong>
+                                    <p class="mb-0">Properly categorizing expenses helps with accurate reporting and budget tracking.</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-primary"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                <div>
+                                    <strong>Always upload receipts</strong>
+                                    <p class="mb-0">Upload receipts for easier verification and tax documentation.</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item d-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2 text-primary"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                <div>
+                                    <strong>Use recurring expenses</strong>
+                                    <p class="mb-0">For regular expenses, use the recurring option to save time on manual entry.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expense History Tab -->
+    <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Expense History</span>
+                        <div class="d-flex">
+                            <div class="input-group input-group-sm me-2" style="width: 150px">
+                                <span class="input-group-text">From</span>
+                                <input type="date" class="form-control" id="history-start-date">
+                            </div>
+                            <div class="input-group input-group-sm me-2" style="width: 150px">
+                                <span class="input-group-text">To</span>
+                                <input type="date" class="form-control" id="history-end-date">
+                            </div>
+                            <div class="input-group input-group-sm me-2" style="width: 200px">
+                                <span class="input-group-text">Category</span>
+                                <select class="form-select" id="history-category">
+                                    <option value="">All Categories</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="operational">Operational</option>
+                                    <option value="administrative">Administrative</option>
+                                    <option value="utilities">Utilities</option>
+                                    <option value="taxes">Taxes</option>
+                                    <option value="salaries">Salaries</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="input-group input-group-sm me-2" style="width: 200px">
+                                <span class="input-group-text">Employee</span>
+                                <select class="form-select" id="history-employee">
+                                    {% for emp in employees %}
+                                        {% if emp.is_active %}
+                                            <option value="{{ emp.username }}">{{ emp.full_name or emp.username }} ({{ emp.role|capitalize }}) [{{ emp.branch_id }}]</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" id="filter-history-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Employee</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="no-history-data" class="text-center py-4 d-none">
+                            <p class="text-muted">No expense records found for the selected criteria</p>
+                        </div>
+                        <div id="loading-history-data" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading expense history...</p>
+                        </div>
+                        
+                        <nav aria-label="Expense history pagination" class="mt-3">
+                            <ul class="pagination justify-content-center" id="expense-pagination">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous" id="expense-prev">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next" id="expense-next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="me-3">Total: <strong id="filtered-expense-total">₹0.00</strong></span>
+                            <span>Records: <strong id="filtered-expense-count">0</strong></span>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="export-csv-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Export CSV
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="export-pdf-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+                                Export PDF
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="print-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Expense Summary</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Count</th>
+                                        <th>Total</th>
+                                        <th>Average</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="category-summary-table">
+                                    <!-- Summary data will be loaded here -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td id="summary-count">0</td>
+                                        <td id="summary-total">₹0.00</td>
+                                        <td id="summary-average">₹0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <span>Monthly Comparison</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="monthly-comparison-chart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Categories Tab -->
+    <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Expense Categories</span>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Add Category
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Budget</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categories-table">
+                                    <!-- Categories will be loaded here -->
+                                    <tr>
+                                        <td>Maintenance</td>
+                                        <td>All equipment and facility maintenance costs</td>
+                                        <td>₹2,500.00</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1 edit-category-btn" data-id="maintenance">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-category-btn" data-id="maintenance">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Operational</td>
+                                        <td>Day-to-day operational expenses</td>
+                                        <td>₹5,000.00</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1 edit-category-btn" data-id="operational">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-category-btn" data-id="operational">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Administrative</td>
+                                        <td>Office and administrative expenses</td>
+                                        <td>₹1,500.00</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1 edit-category-btn" data-id="administrative">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-category-btn" data-id="administrative">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Utilities</td>
+                                        <td>Water, electricity, internet, etc.</td>
+                                        <td>₹1,000.00</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1 edit-category-btn" data-id="utilities">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-category-btn" data-id="utilities">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Budget Allocation</span>
+                        <button class="btn btn-sm btn-outline-primary" id="edit-budgets-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            Edit Budgets
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <canvas id="budget-allocation-chart" height="250"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Budget Allocation</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>Maintenance</td>
+                                                <td><span class="badge bg-primary">25%</span></td>
+                                                <td>₹2,500</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Operational</td>
+                                                <td><span class="badge bg-success">50%</span></td>
+                                                <td>₹5,000</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Administrative</td>
+                                                <td><span class="badge bg-info">15%</span></td>
+                                                <td>₹1,500</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Utilities</td>
+                                                <td><span class="badge bg-warning">10%</span></td>
+                                                <td>₹1,000</td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="fw-bold">
+                                                <td>Total Budget</td>
+                                                <td><span class="badge bg-dark">100%</span></td>
+                                                <td>₹10,000</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Budget Utilized</span>
+                                        <span>₹7,842.50 / ₹10,000.00</span>
+                                    </div>
+                                    <div class="progress mb-1" style="height: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 78%" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small class="text-muted">78.4% of monthly budget used</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Category Spending Trends</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end mb-3">
+                            <div class="btn-group" role="group" aria-label="Time period selector">
+                                <button type="button" class="btn btn-sm btn-outline-secondary active period-btn" data-period="6">6 Months</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary period-btn" data-period="12">12 Months</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary period-btn" data-period="24">24 Months</button>
+                            </div>
+                        </div>
+                        <canvas id="category-trends-chart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reports Tab -->
+    <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Generate Expense Report</span>
+                    </div>
+                    <div class="card-body">
+                        <form id="report-form" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="report-type" class="form-label">Report Type</label>
+                                <select class="form-select" id="report-type" required>
+                                    <option value="">Select Report Type</option>
+                                    <option value="summary">Monthly Summary</option>
+                                    <option value="category">Category Breakdown</option>
+                                    <option value="employee">Employee Expenses</option>
+                                    <option value="budget">Budget Analysis</option>
+                                    <option value="trend">Spending Trends</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-start-date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="report-start-date" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-end-date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="report-end-date" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-format" class="form-label">Format</label>
+                                <select class="form-select" id="report-format" required>
+                                    <option value="pdf">PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-category" class="form-label">Category (Optional)</label>
+                                <select class="form-select" id="report-category">
+                                    <option value="">All Categories</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="operational">Operational</option>
+                                    <option value="administrative">Administrative</option>
+                                    <option value="utilities">Utilities</option>
+                                    <option value="taxes">Taxes</option>
+                                    <option value="salaries">Salaries</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-employee" class="form-label">Employee (Optional)</label>
+                                <select class="form-select" id="report-employee">
+                                    {% for emp in employees %}
+                                        {% if emp.is_active %}
+                                            <option value="{{ emp.username }}">{{ emp.full_name or emp.username }} ({{ emp.role|capitalize }}) [{{ emp.branch_id }}]</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-comparison" class="form-label">Compare With</label>
+                                <select class="form-select" id="report-comparison">
+                                    <option value="">No Comparison</option>
+                                    <option value="previous_period">Previous Period</option>
+                                    <option value="same_period_last_year">Same Period Last Year</option>
+                                    <option value="budget">Budget</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="report-group-by" class="form-label">Group By</label>
+                                <select class="form-select" id="report-group-by">
+                                    <option value="day">Day</option>
+                                    <option value="week">Week</option>
+                                    <option value="month" selected>Month</option>
+                                    <option value="quarter">Quarter</option>
+                                    <option value="year">Year</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="report-include-charts" checked>
+                                    <label class="form-check-label" for="report-include-charts">
+                                        Include Charts and Visualizations
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="button" class="btn btn-outline-secondary me-2" id="preview-report-btn">Preview Report</button>
+                                <button type="submit" class="btn btn-primary">Generate Report</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Recent Reports</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Report Type</th>
+                                        <th>Period</th>
+                                        <th>Categories</th>
+                                        <th>Generated On</th>
+                                        <th>Generated By</th>
+                                        <th>Format</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reports-table">
+                                    {% for report in reports %}
+                                    <tr>
+                                        <td>{{ report.type }}</td>
+                                        <td>{{ report.period }}</td>
+                                        <td>{{ report.categories }}</td>
+                                        <td>{{ report.generated_on }}</td>
+                                        <td>{{ report.generated_by }}</td>
+                                        <td>{{ report.format }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Scheduled Reports</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Report Name</th>
+                                        <th>Type</th>
+                                        <th>Frequency</th>
+                                        <th>Recipients</th>
+                                        <th>Last Generated</th>
+                                        <th>Next Run</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scheduled-reports-table">
+                                    <!-- Scheduled reports will be loaded here -->
+                                    <tr>
+                                        <td>Monthly Expense Summary</td>
+                                        <td>Summary</td>
+                                        <td>Monthly (1st)</td>
+                                        <td>John Peterson, Sarah Williams</td>
+                                        <td>April 1, 2025</td>
+                                        <td>May 1, 2025</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1 edit-schedule-btn" data-id="1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary me-1 run-now-btn" data-id="1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-schedule-btn" data-id="1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Weekly Maintenance Costs</td>
+                                        <td>Category</td>
+                                        <td>Weekly (Monday)</td>
+                                        <td>John Peterson</td>
+                                        <td>April 8, 2025</td>
+                                        <td>April 15, 2025</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1 edit-schedule-btn" data-id="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary me-1 run-now-btn" data-id="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-schedule-btn" data-id="2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleReportModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Schedule New Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Add Expense Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-category-form">
+                    <div class="mb-3">
+                        <label for="category-name" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="category-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="category-description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category-budget" class="form-label">Monthly Budget</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="category-budget" step="0.01" min="0">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-category-btn">Add Category</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Report Modal -->
+<div class="modal fade" id="scheduleReportModal" tabindex="-1" aria-labelledby="scheduleReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleReportModalLabel">Schedule Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="schedule-report-form" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="schedule-name" class="form-label">Report Name</label>
+                        <input type="text" class="form-control" id="schedule-name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="schedule-type" class="form-label">Report Type</label>
+                        <select class="form-select" id="schedule-type" required>
+                            <option value="">Select Report Type</option>
+                            <option value="summary">Monthly Summary</option>
+                            <option value="category">Category Breakdown</option>
+                            <option value="employee">Employee Expenses</option>
+                            <option value="budget">Budget Analysis</option>
+                            <option value="trend">Spending Trends</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="schedule-frequency" class="form-label">Frequency</label>
+                        <select class="form-select" id="schedule-frequency" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Bi-Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="schedule-day" class="form-label">Day</label>
+                        <select class="form-select" id="schedule-day">
+                            <option value="1">1st</option>
+                            <option value="2">2nd</option>
+                            <option value="3">3rd</option>
+                            <option value="4">4th</option>
+                            <option value="5">5th</option>
+                            <option value="10">10th</option>
+                            <option value="15">15th</option>
+                            <option value="20">20th</option>
+                            <option value="25">25th</option>
+                            <option value="last">Last Day</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="schedule-time" class="form-label">Time</label>
+                        <input type="time" class="form-control" id="schedule-time" value="08:00" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="schedule-format" class="form-label">Format</label>
+                        <select class="form-select" id="schedule-format" required>
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                            <option value="csv">CSV</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label for="schedule-recipients" class="form-label">Recipients</label>
+                        <select class="form-select" id="schedule-recipients" multiple required>
+                            {% for emp in employees %}
+                                {% if emp.is_active %}
+                                    <option value="{{ emp.username }}">{{ emp.full_name or emp.username }} ({{ emp.role|capitalize }}) [{{ emp.branch_id }}]</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple recipients</div>
+                    </div>
+                    <div class="col-md-12">
+                        <label for="schedule-message" class="form-label">Email Message (Optional)</label>
+                        <textarea class="form-control" id="schedule-message" rows="3"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="schedule-attach" checked>
+                            <label class="form-check-label" for="schedule-attach">
+                                Attach Report to Email
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="schedule-dashboard" checked>
+                            <label class="form-check-label" for="schedule-dashboard">
+                                Save Report to Dashboard
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-schedule-btn">Schedule Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts
+    initCharts();
+    
+    // Initialize date pickers
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    document.getElementById('expense-date').valueAsDate = now;
+    document.getElementById('history-start-date').value = formatDateForInput(startOfMonth);
+    document.getElementById('history-end-date').value = formatDateForInput(endOfMonth);
+    document.getElementById('report-start-date').value = formatDateForInput(startOfMonth);
+    document.getElementById('report-end-date').value = formatDateForInput(endOfMonth);
+    
+    // Toggle recurring expense options
+    document.getElementById('expense-recurring').addEventListener('change', function() {
+        const recurringOptions = document.getElementById('recurring-options');
+        if (this.checked) {
+            recurringOptions.classList.remove('d-none');
+        } else {
+            recurringOptions.classList.add('d-none');
+        }
+    });
+    
+    // Add expense form submission
+    document.getElementById('add-expense-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Collect form data
+        const expenseData = {
+            description: document.getElementById('expense-description').value,
+            amount: parseFloat(document.getElementById('expense-amount').value),
+            date: document.getElementById('expense-date').value,
+            category: document.getElementById('expense-category').value,
+            employee_id: document.getElementById('expense-employee').value,
+            payment_method: document.getElementById('expense-payment-method').value || null,
+            notes: document.getElementById('expense-notes').value || null,
+            // In a real app, you would handle file upload differently
+            receipt: document.getElementById('expense-receipt').files.length > 0 ? document.getElementById('expense-receipt').files[0].name : null
+        };
+        
+        // Check if it's a recurring expense
+        if (document.getElementById('expense-recurring').checked) {
+            expenseData.recurring = {
+                frequency: document.getElementById('recurring-frequency').value,
+                end_date: document.getElementById('recurring-end-date').value || null
+            };
+        }
+        
+        // In a real app, you would send this data to your API
+        console.log('Expense data:', expenseData);
+        
+        // Simulate successful submission
+        showAlert('Expense added successfully!', 'success');
+        this.reset();
+        document.getElementById('recurring-options').classList.add('d-none');
+        
+        // Switch to overview tab
+        document.getElementById('overview-tab').click();
+    });
+    
+    // Save category button
+    document.getElementById('save-category-btn').addEventListener('click', function() {
+        const form = document.getElementById('add-category-form');
+        
+        if (form.checkValidity()) {
+            const categoryData = {
+                name: document.getElementById('category-name').value,
+                description: document.getElementById('category-description').value,
+                budget: parseFloat(document.getElementById('category-budget').value) || 0
+            };
+            
+            // In a real app, you would send this data to your API
+            console.log('Category data:', categoryData);
+            
+            // Simulate successful submission
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+            modal.hide();
+            showAlert('Category added successfully!', 'success');
+            form.reset();
+        } else {
+            form.reportValidity();
+        }
+    });
+    
+    // Save scheduled report button
+    document.getElementById('save-schedule-btn').addEventListener('click', function() {
+        const form = document.getElementById('schedule-report-form');
+        
+        if (form.checkValidity()) {
+            // Collect selected recipients
+            const recipientsSelect = document.getElementById('schedule-recipients');
+            const selectedRecipients = Array.from(recipientsSelect.selectedOptions).map(option => option.value);
+            
+            const scheduleData = {
+                name: document.getElementById('schedule-name').value,
+                type: document.getElementById('schedule-type').value,
+                frequency: document.getElementById('schedule-frequency').value,
+                day: document.getElementById('schedule-day').value,
+                time: document.getElementById('schedule-time').value,
+                format: document.getElementById('schedule-format').value,
+                recipients: selectedRecipients,
+                message: document.getElementById('schedule-message').value || null,
+                attach_report: document.getElementById('schedule-attach').checked,
+                save_to_dashboard: document.getElementById('schedule-dashboard').checked
+            };
+            
+            // In a real app, you would send this data to your API
+            console.log('Schedule data:', scheduleData);
+            
+            // Simulate successful submission
+            const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleReportModal'));
+            modal.hide();
+            showAlert('Report scheduled successfully!', 'success');
+            form.reset();
+        } else {
+            form.reportValidity();
+        }
+    });
+    
+    // Report form submission
+    document.getElementById('report-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Collect form data
+        const reportData = {
+            type: document.getElementById('report-type').value,
+            start_date: document.getElementById('report-start-date').value,
+            end_date: document.getElementById('report-end-date').value,
+            format: document.getElementById('report-format').value,
+            category: document.getElementById('report-category').value || null,
+            employee_id: document.getElementById('report-employee').value || null,
+            comparison: document.getElementById('report-comparison').value || null,
+            group_by: document.getElementById('report-group-by').value,
+            include_charts: document.getElementById('report-include-charts').checked
+        };
+        
+        // In a real app, you would send this data to your API
+        console.log('Report generation data:', reportData);
+        
+        showAlert('Report generation started. You will be notified when it\'s complete.', 'info');
+    });
+    
+    // Filter expense history button
+    document.getElementById('filter-history-btn').addEventListener('click', function() {
+        loadExpenseHistory();
+    });
+    
+    // Load data for the active tab
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target').substring(1);
+            
+            switch(targetId) {
+                case 'overview':
+                    loadExpenseOverview();
+                    break;
+                case 'history':
+                    loadExpenseHistory();
+                    break;
+                case 'add':
+                    loadEmployeesForDropdown('expense-employee');
+                    break;
+                case 'categories':
+                    loadBudgetAllocationChart();
+                    loadCategoryTrendsChart();
+                    break;
+                case 'reports':
+                    loadEmployeesForDropdown('report-employee');
+                    break;
+            }
+        });
+    });
+    
+    // Event listeners for trend buttons
+    document.querySelectorAll('.trend-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.trend-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateExpenseTrendChart(this.getAttribute('data-range'));
+        });
+    });
+    
+    // Event listeners for time period buttons
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateCategoryTrendsChart(parseInt(this.getAttribute('data-period')));
+        });
+    });
+    
+    // Export buttons
+    document.getElementById('export-csv-btn').addEventListener('click', function() {
+        showAlert('Exporting expense data to CSV...', 'info');
+        setTimeout(() => {
+            showAlert('CSV export completed successfully!', 'success');
+        }, 1500);
+    });
+    
+    document.getElementById('export-pdf-btn').addEventListener('click', function() {
+        showAlert('Exporting expense data to PDF...', 'info');
+        setTimeout(() => {
+            showAlert('PDF export completed successfully!', 'success');
+        }, 1500);
+    });
+    
+    document.getElementById('print-btn').addEventListener('click', function() {
+        showAlert('Preparing expense data for printing...', 'info');
+        setTimeout(() => {
+            window.print();
+        }, 1000);
+    });
+    
+    // View all expenses button
+    document.getElementById('view-all-expenses-btn').addEventListener('click', function() {
+        document.getElementById('history-tab').click();
+    });
+    
+    // Manage budgets button
+    document.getElementById('manage-budgets-btn').addEventListener('click', function() {
+        document.getElementById('categories-tab').click();
+    });
+    
+    // Edit budget button
+    document.getElementById('edit-budgets-btn').addEventListener('click', function() {
+        showAlert('Budget editing mode enabled. You can now update budget allocations.', 'info');
+    });
+    
+    // View all approvals button
+    document.getElementById('view-all-approvals-btn').addEventListener('click', function() {
+        showAlert('Showing all expense approval requests', 'info');
+    });
+    
+    // Edit category buttons
+    document.querySelectorAll('.edit-category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const categoryId = this.getAttribute('data-id');
+            showAlert(`Editing category: ${categoryId}`, 'info');
+        });
+    });
+    
+    // Delete category buttons
+    document.querySelectorAll('.delete-category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const categoryId = this.getAttribute('data-id');
+            if (confirm(`Are you sure you want to delete the "${categoryId}" category?`)) {
+                showAlert(`Category "${categoryId}" deleted successfully`, 'success');
+            }
+        });
+    });
+    
+    // Edit schedule buttons
+    document.querySelectorAll('.edit-schedule-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const scheduleId = this.getAttribute('data-id');
+            showAlert(`Editing scheduled report #${scheduleId}`, 'info');
+        });
+    });
+    
+    // Run now buttons
+    document.querySelectorAll('.run-now-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const scheduleId = this.getAttribute('data-id');
+            showAlert(`Running scheduled report #${scheduleId} now...`, 'info');
+            setTimeout(() => {
+                showAlert('Report generated successfully!', 'success');
+            }, 2000);
+        });
+    });
+    
+    // Delete schedule buttons
+    document.querySelectorAll('.delete-schedule-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const scheduleId = this.getAttribute('data-id');
+            if (confirm(`Are you sure you want to delete scheduled report #${scheduleId}?`)) {
+                showAlert(`Scheduled report #${scheduleId} deleted successfully`, 'success');
+            }
+        });
+    });
+    
+    // Preview report button
+    document.getElementById('preview-report-btn').addEventListener('click', function() {
+        showAlert('Generating report preview...', 'info');
+        setTimeout(() => {
+            showAlert('Report preview ready!', 'success');
+        }, 2000);
+    });
+    
+    // Load initial data for the overview tab
+    loadExpenseOverview();
+    loadRecentExpenses();
+    loadEmployeesForDropdown('expense-employee');
+    loadEmployeesForDropdown('history-employee');
+    loadEmployeesForDropdown('report-employee');
+});
+
+// Load expense overview data
+function loadExpenseOverview() {
+    // In a real app, this would fetch data from your API
+    // For now, we'll use the sample data already in the HTML
+}
+
+// Load recent expenses
+function loadRecentExpenses() {
+    // Show loading indicator
+    document.getElementById('loading-recent-expenses').style.display = 'block';
+    document.getElementById('no-recent-expenses').classList.add('d-none');
+    
+    // In a real app, this would fetch data from your API
+    setTimeout(() => {
+        document.getElementById('loading-recent-expenses').style.display = 'none';
+        
+        // Add sample data to the table
+        const tableBody = document.getElementById('recent-expenses-table');
+        tableBody.innerHTML = '';
+        
+        const sampleExpenses = [
+            { date: '2025-04-10', description: 'Fuel Pump Maintenance', category: 'Maintenance', amount: 567.89, status: 'Approved' },
+            { date: '2025-04-09', description: 'Office Supplies', category: 'Administrative', amount: 123.45, status: 'Pending' },
+            { date: '2025-04-08', description: 'Electricity Bill', category: 'Utilities', amount: 459.72, status: 'Approved' },
+            { date: '2025-04-07', description: 'Tank Inspection', category: 'Operational', amount: 892.50, status: 'Approved' },
+            { date: '2025-04-06', description: 'Cleaning Services', category: 'Operational', amount: 350.00, status: 'Rejected' }
+        ];
+        
+        sampleExpenses.forEach(expense => {
+            const row = document.createElement('tr');
+            
+            let statusClass = 'secondary';
+            switch(expense.status) {
+                case 'Approved':
+                    statusClass = 'success';
+                    break;
+                case 'Pending':
+                    statusClass = 'warning';
+                    break;
+                case 'Rejected':
+                    statusClass = 'danger';
+                    break;
+            }
+            
+            row.innerHTML = `
+                <td>${formatDate(new Date(expense.date))}</td>
+                <td>${expense.description}</td>
+                <td>${expense.category}</td>
+                <td>₹${expense.amount.toFixed(2)}</td>
+                <td><span class="badge bg-${statusClass}">${expense.status}</span></td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+    }, 1000);
+}
+
+// Load expense history
+function loadExpenseHistory(page = 1, limit = 10) {
+    // Show loading indicator
+    document.getElementById('loading-history-data').style.display = 'block';
+    document.getElementById('no-history-data').classList.add('d-none');
+    
+    // Get filter values
+    const startDate = document.getElementById('history-start-date').value;
+    const endDate = document.getElementById('history-end-date').value;
+    const category = document.getElementById('history-category').value;
+    const employeeId = document.getElementById('history-employee').value;
+    
+    // In a real app, you would use these values to filter the data from your API
+    console.log('Expense history filters:', { startDate, endDate, category, employeeId, page, limit });
+    
+    // Simulate API call with a delay
+    setTimeout(() => {
+        document.getElementById('loading-history-data').style.display = 'none';
+        
+        // Add sample data to the table
+        const tableBody = document.getElementById('history-table');
+        tableBody.innerHTML = '';
+        
+        // Sample expense data (in a real app, this would come from the API)
+        const sampleExpenses = [
+            { date: '2025-04-10', description: 'Fuel Pump Maintenance', category: 'Maintenance', amount: 567.89, employee: 'David Martinez', status: 'Approved' },
+            { date: '2025-04-09', description: 'Office Supplies', category: 'Administrative', amount: 123.45, employee: 'Sarah Williams', status: 'Pending' },
+            { date: '2025-04-08', description: 'Electricity Bill', category: 'Utilities', amount: 459.72, employee: 'John Peterson', status: 'Approved' },
+            { date: '2025-04-07', description: 'Tank Inspection', category: 'Operational', amount: 892.50, employee: 'Emily Johnson', status: 'Approved' },
+            { date: '2025-04-06', description: 'Cleaning Services', category: 'Operational', amount: 350.00, employee: 'David Martinez', status: 'Rejected' },
+            { date: '2025-04-05', description: 'Internet Service', category: 'Utilities', amount: 89.99, employee: 'John Peterson', status: 'Approved' },
+            { date: '2025-04-04', description: 'Marketing Materials', category: 'Administrative', amount: 275.60, employee: 'Sarah Williams', status: 'Approved' },
+            { date: '2025-04-03', description: 'Pump Repair Parts', category: 'Maintenance', amount: 532.40, employee: 'David Martinez', status: 'Approved' },
+            { date: '2025-04-02', description: 'Staff Uniforms', category: 'Operational', amount: 420.75, employee: 'John Peterson', status: 'Approved' },
+            { date: '2025-04-01', description: 'Water Bill', category: 'Utilities', amount: 175.25, employee: 'Emily Johnson', status: 'Approved' }
+        ];
+        
+        // Filter expenses if category is specified
+        let filteredExpenses = [...sampleExpenses];
+        if (category) {
+            filteredExpenses = filteredExpenses.filter(exp => exp.category.toLowerCase() === category.toLowerCase());
+        }
+        
+        // Filter expenses if employee is specified
+        if (employeeId) {
+            filteredExpenses = filteredExpenses.filter(exp => exp.employee === employeeId);
+        }
+        
+        if (filteredExpenses.length === 0) {
+            document.getElementById('no-history-data').classList.remove('d-none');
+            document.getElementById('filtered-expense-total').textContent = '₹0.00';
+            document.getElementById('filtered-expense-count').textContent = '0';
+            updateExpenseSummary([]);
+            return;
+        }
+        
+        // Calculate total and count
+        const total = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+        document.getElementById('filtered-expense-total').textContent = `₹${total.toFixed(2)}`;
+        document.getElementById('filtered-expense-count').textContent = filteredExpenses.length;
+        
+        // Update summary table
+        updateExpenseSummary(filteredExpenses);
+        
+        // Add data to the table
+        filteredExpenses.forEach(expense => {
+            const row = document.createElement('tr');
+            
+            let statusClass = 'secondary';
+            switch(expense.status) {
+                case 'Approved':
+                    statusClass = 'success';
+                    break;
+                case 'Pending':
+                    statusClass = 'warning';
+                    break;
+                case 'Rejected':
+                    statusClass = 'danger';
+                    break;
+            }
+            
+            row.innerHTML = `
+                <td>${formatDate(new Date(expense.date))}</td>
+                <td>${expense.description}</td>
+                <td>${expense.category}</td>
+                <td>₹${expense.amount.toFixed(2)}</td>
+                <td>${expense.employee}</td>
+                <td><span class="badge bg-${statusClass}">${expense.status}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1 view-expense-btn" data-id="${expense.date}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    ${expense.status === 'Pending' ? `
+                    <button class="btn btn-sm btn-outline-success me-1 approve-expense-btn" data-id="${expense.date}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger reject-expense-btn" data-id="${expense.date}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    ` : ''}
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Add event listeners to buttons
+        document.querySelectorAll('.view-expense-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const expenseId = this.getAttribute('data-id');
+                showAlert(`Viewing expense details for ${expenseId}`, 'info');
+            });
+        });
+        
+        document.querySelectorAll('.approve-expense-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const expenseId = this.getAttribute('data-id');
+                showAlert(`Expense ${expenseId} approved successfully`, 'success');
+                this.closest('tr').querySelector('span.badge').className = 'badge bg-success';
+                this.closest('tr').querySelector('span.badge').textContent = 'Approved';
+                // Remove approve/reject buttons
+                this.parentNode.innerHTML = `
+                    <button class="btn btn-sm btn-outline-primary me-1 view-expense-btn" data-id="${expenseId}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                `;
+            });
+        });
+        
+        document.querySelectorAll('.reject-expense-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const expenseId = this.getAttribute('data-id');
+                showAlert(`Expense ${expenseId} rejected`, 'warning');
+                this.closest('tr').querySelector('span.badge').className = 'badge bg-danger';
+                this.closest('tr').querySelector('span.badge').textContent = 'Rejected';
+                // Remove approve/reject buttons
+                this.parentNode.innerHTML = `
+                    <button class="btn btn-sm btn-outline-primary me-1 view-expense-btn" data-id="${expenseId}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                `;
+            });
+        });
+        
+        // Update pagination
+        document.getElementById('expense-prev').parentElement.classList.toggle('disabled', page === 1);
+        document.querySelector('#expense-pagination .page-item.active .page-link').textContent = page;
+        document.getElementById('expense-next').parentElement.classList.toggle('disabled', filteredExpenses.length < limit);
+    }, 1000);
+}
+
+// Update expense summary table
+function updateExpenseSummary(expenses) {
+    const summaryTable = document.getElementById('category-summary-table');
+    summaryTable.innerHTML = '';
+    
+    // Group expenses by category
+    const categorySummary = {};
+    let totalAmount = 0;
+    let totalCount = 0;
+    
+    expenses.forEach(expense => {
+        if (!categorySummary[expense.category]) {
+            categorySummary[expense.category] = {
+                count: 0,
+                total: 0
+            };
+        }
+        
+        categorySummary[expense.category].count++;
+        categorySummary[expense.category].total += expense.amount;
+        totalAmount += expense.amount;
+        totalCount++;
+    });
+    
+    // Add summary rows
+    Object.keys(categorySummary).forEach(category => {
+        const row = document.createElement('tr');
+        const summary = categorySummary[category];
+        const average = summary.total / summary.count;
+        
+        row.innerHTML = `
+            <td>${category}</td>
+            <td>${summary.count}</td>
+            <td>₹${summary.total.toFixed(2)}</td>
+            <td>₹${average.toFixed(2)}</td>
+        `;
+        
+        summaryTable.appendChild(row);
+    });
+    
+    // Update total row
+    const avgTotal = totalCount > 0 ? totalAmount / totalCount : 0;
+    document.getElementById('summary-count').textContent = totalCount;
+    document.getElementById('summary-total').textContent = `₹${totalAmount.toFixed(2)}`;
+    document.getElementById('summary-average').textContent = `₹${avgTotal.toFixed(2)}`;
+    
+    // Update monthly comparison chart
+    updateMonthlyComparisonChart(categorySummary, totalAmount);
+}
+
+// Load employees for a dropdown
+function loadEmployeesForDropdown(elementId) {
+    // In a real app, this would fetch data from your API
+    const dropdown = document.getElementById(elementId);
+    
+    if (!dropdown) return;
+    
+    // Clear existing options except the first one
+    while (dropdown.options.length > 1) {
+        dropdown.remove(1);
+    }
+    
+    // Sample employee data
+    const employees = [
+        { id: 'john', name: 'John Peterson', role: 'Manager', branch_id: 'B001' },
+        { id: 'sarah', name: 'Sarah Williams', role: 'Manager', branch_id: 'B002' },
+        { id: 'david', name: 'David Martinez', role: 'Attendant', branch_id: 'B001' },
+        { id: 'emily', name: 'Emily Johnson', role: 'Attendant', branch_id: 'B002' }
+    ];
+    
+    // Add employee options
+    employees.forEach(employee => {
+        const option = document.createElement('option');
+        option.value = employee.name;  // Using name as value for simplicity
+        option.textContent = `${employee.name} (${employee.role}) [${employee.branch_id}]`;
+        dropdown.appendChild(option);
+    });
+}
+
+// Initialize all charts
+function initCharts() {
+    // Expense trend chart
+    const trendCtx = document.getElementById('expense-trend-chart');
+    if (trendCtx) {
+        window.expenseTrendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [
+                    {
+                        label: 'Total Expenses',
+                        data: [5235, 6420, 7105, 7842, 0, 0],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return `₹${value}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Category distribution chart
+    const categoryDistCtx = document.getElementById('category-distribution-chart');
+    if (categoryDistCtx) {
+        window.categoryDistChart = new Chart(categoryDistCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Operational', 'Maintenance', 'Administrative', 'Utilities'],
+                datasets: [{
+                    data: [4215.75, 2316.30, 1310.45, 0],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `₹${value.toFixed(2)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update expense trend chart
+function updateExpenseTrendChart(range) {
+    const chart = window.expenseTrendChart;
+    if (!chart) return;
+    
+    // In a real app, you would fetch data based on the selected range
+    let labels, data;
+    
+    switch(range) {
+        case 'week':
+            labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            data = [236, 145, 321, 189, 276, 198, 125];
+            break;
+        case 'month':
+            labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            data = [1890, 2245, 1876, 1831];
+            break;
+        case 'quarter':
+            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            data = [5235, 6420, 7105, 7842, 0, 0];
+            break;
+        case 'year':
+            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            data = [5235, 6420, 7105, 7842, 0, 0, 0, 0, 0, 0, 0, 0];
+            break;
+    }
+    
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+}
+
+// Update monthly comparison chart
+function updateMonthlyComparisonChart(categorySummary, totalAmount) {
+    const monthlyCompCtx = document.getElementById('monthly-comparison-chart');
+    if (!monthlyCompCtx) return;
+    
+    // If the chart already exists, destroy it
+    if (window.monthlyCompChart) {
+        window.monthlyCompChart.destroy();
+    }
+    
+    // Prepare data
+    const categories = Object.keys(categorySummary);
+    const currentMonthData = categories.map(cat => categorySummary[cat].total);
+    
+    // Simulate previous month data (in a real app, this would come from the API)
+    const previousMonthData = currentMonthData.map(val => val * (0.8 + Math.random() * 0.4)); // 80-120% of current
+    
+    window.monthlyCompChart = new Chart(monthlyCompCtx, {
+        type: 'bar',
+        data: {
+            labels: categories,
+            datasets: [
+                {
+                    label: 'Current Month',
+                    data: currentMonthData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Previous Month',
+                    data: previousMonthData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return `₹${value}`;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            return `${context.dataset.label}: ₹${value.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Load budget allocation chart
+function loadBudgetAllocationChart() {
+    const budgetCtx = document.getElementById('budget-allocation-chart');
+    if (!budgetCtx) return;
+    
+    // If the chart already exists, destroy it
+    if (window.budgetChart) {
+        window.budgetChart.destroy();
+    }
+    
+    // Sample budget data
+    const budgetData = {
+        labels: ['Maintenance', 'Operational', 'Administrative', 'Utilities'],
+        amounts: [2500, 5000, 1500, 1000],
+        colors: [
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)'
+        ],
+        borderColors: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+        ]
+    };
+    
+    window.budgetChart = new Chart(budgetCtx, {
+        type: 'pie',
+        data: {
+            labels: budgetData.labels,
+            datasets: [{
+                data: budgetData.amounts,
+                backgroundColor: budgetData.colors,
+                borderColor: budgetData.borderColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `₹${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Load category trends chart
+function updateCategoryTrendsChart(months = 6) {
+    const trendsCtx = document.getElementById('category-trends-chart');
+    if (!trendsCtx) return;
+    
+    // If the chart already exists, destroy it
+    if (window.categoryTrendsChart) {
+        window.categoryTrendsChart.destroy();
+    }
+    
+    // Generate months labels
+    const labels = [];
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+        const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(month.toLocaleString('default', { month: 'short', year: '2-digit' }));
+    }
+    
+    // Sample data for each category
+    const operationalData = [];
+    const maintenanceData = [];
+    const administrativeData = [];
+    const utilitiesData = [];
+    
+    for (let i = 0; i < months; i++) {
+        operationalData.push(Math.floor(3000 + Math.random() * 2000));
+        maintenanceData.push(Math.floor(1500 + Math.random() * 1500));
+        administrativeData.push(Math.floor(1000 + Math.random() * 500));
+        utilitiesData.push(Math.floor(700 + Math.random() * 300));
+    }
+    
+    window.categoryTrendsChart = new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Operational',
+                    data: operationalData,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Maintenance',
+                    data: maintenanceData,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Administrative',
+                    data: administrativeData,
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Utilities',
+                    data: utilitiesData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return `₹${value}`;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            return `${context.dataset.label}: ₹${value.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Helper function to format date for input fields
+function formatDateForInput(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Helper function to format date (Month Day, Year)
+function formatDate(date) {
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+    const alertsContainer = document.createElement('div');
+    alertsContainer.className = 'position-fixed top-0 end-0 p-3';
+    alertsContainer.style.zIndex = '1050';
+    
+    const alertHtml = `
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">PetrolPro</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body bg-${type} text-white">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    alertsContainer.innerHTML = alertHtml;
+    document.body.appendChild(alertsContainer);
+    
+    // Remove the alert after 5 seconds
+    setTimeout(() => {
+        alertsContainer.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

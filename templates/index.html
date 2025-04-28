@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block page_title %}Welcome to PetrolPro{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">Fuel Management System</h2>
+                <p class="card-text">PetrolPro is a comprehensive management system for petrol stations, offering tools for fuel inventory, sales tracking, staff management, and analytics.</p>
+                <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M3 22h12"></path><path d="M8 6h7a2 2 0 0 1 2 2v10"></path><path d="M9 10v7"></path><path d="M13 10v7"></path><path d="M9 6V2"></path><path d="M12 6V2"></path></svg>
+                    Fuel Management
+                </h3>
+                <p class="card-text">Track fuel inventory, record deliveries, and monitor tank levels</p>
+                <a href="/fuel" class="btn btn-outline-secondary">Manage Fuel</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M20 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM2 10h20"></path></svg>
+                    Sales Tracking
+                </h3>
+                <p class="card-text">Record fuel sales, manage customer loyalty, and analyze sales data</p>
+                <a href="/sales" class="btn btn-outline-secondary">View Sales</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Staff Management
+                </h3>
+                <p class="card-text">Manage attendants, track attendance, and record staff expenses</p>
+                <a href="/staff" class="btn btn-outline-secondary">Manage Staff</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Reports
+                </h3>
+                <p class="card-text">Generate detailed reports with AI-driven insights and recommendations</p>
+                <a href="/reports" class="btn btn-outline-secondary">View Reports</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+                    Expenses
+                </h3>
+                <p class="card-text">Track and categorize station expenses and manage financial records</p>
+                <a href="/expenses" class="btn btn-outline-secondary">Manage Expenses</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

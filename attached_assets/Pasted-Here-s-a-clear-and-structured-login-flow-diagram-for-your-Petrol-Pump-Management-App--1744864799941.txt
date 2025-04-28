@@ -1,0 +1,46 @@
+Here's a clear and structured login flow diagram for your Petrol Pump Management App:
+
+```
++----------------------------------------------------+
+|               Petrol Pump App Login                |
++----------------------------------------------------+
+                          |
+                          v
+              +------------------------+
+              |       User Login       |
+              +------------------------+
+                          |
+       +------------------+-------------------+
+       |                  |                   |
+       v                  v                   v
++-------------+    +--------------+    +----------------+
+| Admin Login |    | Branch Login |    | Pumpman Login  |
++-------------+    +--------------+    +----------------+
+       |                  |                   |
+       v                  v                   v
++----------------+  +----------------+  +-------------------+
+| Credentials    |  | Credentials    |  | Credentials       |
+| Provided by    |  | Created by     |  | Created by        |
+| Svira Apex     |  | Admin          |  | Branch Managers   |
++----------------+  +----------------+  +-------------------+
+       |                  |                   |
+       v                  v                   v
++----------------+  +----------------+  +-------------------+
+| Admin Dashboard|  | Branch Manager |  | Pumpman Dashboard |
+| (Full Access)  |  | Dashboard      |  | (Limited Access)  |
++----------------+  +----------------+  +-------------------+
+```
+
+### Explanation:
+
+- **Admin Login**:
+  - Credentials provided directly by you (Svira Apex Solutions).
+  - Admin has full access and manages all operations, including creating Branch Manager logins.
+
+- **Branch Login**:
+  - Created and managed by Admin.
+  - Branch Manager oversees branch-specific tasks and creates logins for Pumpmen.
+
+- **Pumpman Login**:
+  - Created and managed by Branch Managers.
+  - Limited access to pump-specific operations (shift reporting, target tracking, etc.).

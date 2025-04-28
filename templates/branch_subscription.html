@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}Branch Subscription{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Subscription for {{ branch.name }}</h4>
+                </div>
+                <div class="card-body">
+                    {% if msg %}
+                        <div class="alert alert-info">{{ msg }}</div>
+                    {% endif %}
+                    {% if not (subscription and active) %}
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="plan_type" class="form-label">Subscription Plan</label>
+                            <select class="form-select" id="plan_type" name="plan_type" required>
+                                <option value="">Select Plan</option>
+                                {% for plan in plan_types %}
+                                    <option value="{{ plan.plan_type }}" {% if subscription and subscription.plan_type == plan.plan_type %}selected{% endif %}>
+                                        {{ plan.plan_type|capitalize }} (₹{{ plan.amount }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Set Subscription</button>
+                    </form>
+                    {% endif %}
+                    <hr>
+                    <h6>Current Subscription Status</h6>
+                    {% if subscription %}
+                        <div class="row mb-2">
+                            <div class="col-4 text-end"><b>Plan:</b></div>
+                            <div class="col-8">{{ subscription.plan_type|capitalize }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-end"><b>Start Date:</b></div>
+                            <div class="col-8">{{ subscription.start_date }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-end"><b>End Date:</b></div>
+                            <div class="col-8">{{ subscription.end_date }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-end"><b>Amount:</b></div>
+                            <div class="col-8">₹{{ amount }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-end"><b>Status:</b></div>
+                            <div class="col-8">
+                                {% if active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="text-muted">No subscription set for this branch.</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

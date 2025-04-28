@@ -1,0 +1,686 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Totalizer Sales Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title">Shift Sales Summary</h5>
+                    <p class="card-text">View sales calculated from totalizer readings (closing - opening).</p>
+                    <div class="d-flex">
+                        <a href="/totalizer" class="btn btn-primary me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                            Back to Readings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Filter Sales Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filter-form" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="branch-filter" class="form-label">Branch</label>
+                            <select id="branch-filter" class="form-select">
+                                <option value="all">All Branches</option>
+                                <!-- Branches will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="product-filter" class="form-label">Product</label>
+                            <select id="product-filter" class="form-select">
+                                <option value="all">All Products</option>
+                                <option value="Petrol">Petrol</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Premium Petrol">Premium Petrol</option>
+                                <option value="Premium Diesel">Premium Diesel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="shift-filter" class="form-label">Shift</label>
+                            <select id="shift-filter" class="form-select">
+                                <option value="all">All Shifts</option>
+                                <option value="morning">Morning (6AM-2PM)</option>
+                                <option value="evening">Evening (2PM-10PM)</option>
+                                <option value="night">Night (10PM-6AM)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="start-date" class="form-label">Start Date</label>
+                            <input type="date" id="start-date" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end-date" class="form-label">End Date</label>
+                            <input type="date" id="end-date" class="form-control">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Sales by Product</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="product-chart" height="300"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Units Sold</th>
+                                            <th>Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="product-summary-body">
+                                        <!-- Product summary will be inserted here by JavaScript -->
+                                        <tr>
+                                            <td colspan="3" class="text-center">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Sales by Pumpman</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="pumpman-chart" height="300"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Pumpman ID</th>
+                                            <th>Units Sold</th>
+                                            <th>Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pumpman-summary-body">
+                                        <!-- Pumpman summary will be inserted here by JavaScript -->
+                                        <tr>
+                                            <td colspan="3" class="text-center">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Detailed Sales Records</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Pump/Nozzle</th>
+                                    <th>Product</th>
+                                    <th>Opening Reading</th>
+                                    <th>Closing Reading</th>
+                                    <th>Units Sold</th>
+                                    <th>Amount (₹)</th>
+                                    <th>Shift</th>
+                                    <th>Pumpman</th>
+                                    <th>Branch</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-table-body">
+                                <!-- Loading message -->
+                                <tr id="loading-row">
+                                    <td colspan="10" class="text-center">Loading sales data...</td>
+                                </tr>
+                                <!-- No sales message (hidden by default) -->
+                                <tr id="no-sales-row" style="display: none;">
+                                    <td colspan="10" class="text-center">No sales data found for the selected filters.</td>
+                                </tr>
+                                <!-- Sales will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-dark text-light d-flex justify-content-between align-items-center">
+                    <span id="sales-count">0 records</span>
+                    <div class="pagination-controls">
+                        <button id="prev-page" class="btn btn-sm btn-primary me-2" disabled>Previous</button>
+                        <span id="page-info">Page 1</span>
+                        <button id="next-page" class="btn btn-sm btn-primary ms-2" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const salesTableBody = document.getElementById('sales-table-body');
+        const loadingRow = document.getElementById('loading-row');
+        const noSalesRow = document.getElementById('no-sales-row');
+        const salesCount = document.getElementById('sales-count');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const productSummaryBody = document.getElementById('product-summary-body');
+        const pumpmanSummaryBody = document.getElementById('pumpman-summary-body');
+        const filterForm = document.getElementById('filter-form');
+        const branchFilter = document.getElementById('branch-filter');
+        const productFilter = document.getElementById('product-filter');
+        const shiftFilter = document.getElementById('shift-filter');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        
+        // Charts
+        let productChart = null;
+        let pumpmanChart = null;
+        
+        // Pagination state
+        let currentPage = 1;
+        let totalPages = 1;
+        const limit = 10;
+        
+        // Filter state
+        let selectedBranch = localStorage.getItem('selectedBranch') || 'all';
+        let selectedProduct = 'all';
+        let selectedShift = 'all';
+        let startDate = null;
+        let endDate = null;
+        
+        // Set initial branch filter value
+        branchFilter.value = selectedBranch;
+        
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        startDateInput.valueAsDate = thirtyDaysAgo;
+        endDateInput.valueAsDate = today;
+        
+        startDate = startDateInput.value;
+        endDate = endDateInput.value;
+        
+        // Populate branches dropdown
+        function populateBranches() {
+            const branches = [
+                { id: 'branch-1', name: 'Main Station' },
+                { id: 'branch-2', name: 'Highway Station' },
+                { id: 'branch-3', name: 'City Center' }
+            ];
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.id;
+                option.textContent = branch.name;
+                branchFilter.appendChild(option);
+            });
+        }
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+        
+        // Fetch detailed sales data
+        function fetchSales() {
+            // Show loading
+            loadingRow.style.display = 'table-row';
+            noSalesRow.style.display = 'none';
+            
+            // Clear existing sales
+            const rows = salesTableBody.querySelectorAll('tr:not(#loading-row):not(#no-sales-row)');
+            rows.forEach(row => row.remove());
+            
+            // Calculate offset
+            const offset = (currentPage - 1) * limit;
+            
+            // Build URL with query parameters
+            let url = `/api/totalizer/sales?limit=${limit}&offset=${offset}`;
+            
+            if (selectedBranch !== 'all') {
+                url += `&branch_id=${selectedBranch}`;
+            }
+            
+            if (selectedProduct !== 'all') {
+                url += `&product_type=${selectedProduct}`;
+            }
+            
+            if (selectedShift !== 'all') {
+                url += `&shift=${selectedShift}`;
+            }
+            
+            if (startDate) {
+                url += `&start_date=${startDate}T00:00:00`;
+            }
+            
+            if (endDate) {
+                url += `&end_date=${endDate}T23:59:59`;
+            }
+            
+            // Fetch sales from API
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading
+                    loadingRow.style.display = 'none';
+                    
+                    // Check if no sales
+                    if (!data.length) {
+                        noSalesRow.style.display = 'table-row';
+                        salesCount.textContent = '0 records';
+                        return;
+                    }
+                    
+                    // Display sales
+                    data.forEach(sale => {
+                        const row = document.createElement('tr');
+                        
+                        // Format date
+                        const date = new Date(sale.date);
+                        const formattedDate = date.toLocaleDateString();
+                        
+                        row.innerHTML = `
+                            <td>${formattedDate}</td>
+                            <td>${sale.pump_id}/${sale.nozzle_id}</td>
+                            <td>${sale.product_type}</td>
+                            <td>${sale.opening_reading.toFixed(2)}</td>
+                            <td>${sale.closing_reading.toFixed(2)}</td>
+                            <td>${sale.units_sold.toFixed(2)}</td>
+                            <td>${formatCurrency(sale.amount)}</td>
+                            <td>${sale.shift}</td>
+                            <td>${sale.pumpman_id}</td>
+                            <td>${sale.branch_id}</td>
+                        `;
+                        
+                        salesTableBody.appendChild(row);
+                    });
+                    
+                    // Update sales count
+                    salesCount.textContent = `${data.length} records`;
+                    
+                    // Update pagination
+                    // In a real app, we would get total count from API
+                    // For now, we just enable/disable next button based on returned results
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = data.length < limit;
+                    pageInfo.textContent = `Page ${currentPage}`;
+                })
+                .catch(error => {
+                    console.error('Error fetching sales:', error);
+                    loadingRow.style.display = 'none';
+                    noSalesRow.style.display = 'table-row';
+                    noSalesRow.cells[0].textContent = 'Error loading sales data. Please try again.';
+                });
+        }
+        
+        // Fetch product summary data
+        function fetchProductSummary() {
+            // Build URL with query parameters
+            let url = `/api/totalizer/sales/summary/product`;
+            
+            if (selectedBranch !== 'all') {
+                url += `?branch_id=${selectedBranch}`;
+            } else {
+                url += '?';
+            }
+            
+            if (startDate) {
+                url += `&start_date=${startDate}T00:00:00`;
+            }
+            
+            if (endDate) {
+                url += `&end_date=${endDate}T23:59:59`;
+            }
+            
+            // Fetch data from API
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear existing data
+                    productSummaryBody.innerHTML = '';
+                    
+                    // Check if no data
+                    if (!data.length) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="3" class="text-center">No data available</td>';
+                        productSummaryBody.appendChild(row);
+                        return;
+                    }
+                    
+                    // Display data
+                    let totalUnits = 0;
+                    let totalAmount = 0;
+                    
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.product_type}</td>
+                            <td>${item.total_units.toFixed(2)}</td>
+                            <td>${formatCurrency(item.total_amount)}</td>
+                        `;
+                        productSummaryBody.appendChild(row);
+                        
+                        totalUnits += item.total_units;
+                        totalAmount += item.total_amount;
+                    });
+                    
+                    // Add total row
+                    const totalRow = document.createElement('tr');
+                    totalRow.classList.add('fw-bold');
+                    totalRow.innerHTML = `
+                        <td>Total</td>
+                        <td>${totalUnits.toFixed(2)}</td>
+                        <td>${formatCurrency(totalAmount)}</td>
+                    `;
+                    productSummaryBody.appendChild(totalRow);
+                    
+                    // Update chart
+                    updateProductChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching product summary:', error);
+                    productSummaryBody.innerHTML = '<tr><td colspan="3" class="text-center">Error loading data</td></tr>';
+                });
+        }
+        
+        // Fetch pumpman summary data
+        function fetchPumpmanSummary() {
+            // Build URL with query parameters
+            let url = `/api/totalizer/sales/summary/pumpman`;
+            
+            if (selectedBranch !== 'all') {
+                url += `?branch_id=${selectedBranch}`;
+            } else {
+                url += '?';
+            }
+            
+            if (startDate) {
+                url += `&start_date=${startDate}T00:00:00`;
+            }
+            
+            if (endDate) {
+                url += `&end_date=${endDate}T23:59:59`;
+            }
+            
+            // Fetch data from API
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear existing data
+                    pumpmanSummaryBody.innerHTML = '';
+                    
+                    // Check if no data
+                    if (!data.length) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="3" class="text-center">No data available</td>';
+                        pumpmanSummaryBody.appendChild(row);
+                        return;
+                    }
+                    
+                    // Display data
+                    let totalUnits = 0;
+                    let totalAmount = 0;
+                    
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.pumpman_id}</td>
+                            <td>${item.total_units.toFixed(2)}</td>
+                            <td>${formatCurrency(item.total_amount)}</td>
+                        `;
+                        pumpmanSummaryBody.appendChild(row);
+                        
+                        totalUnits += item.total_units;
+                        totalAmount += item.total_amount;
+                    });
+                    
+                    // Add total row
+                    const totalRow = document.createElement('tr');
+                    totalRow.classList.add('fw-bold');
+                    totalRow.innerHTML = `
+                        <td>Total</td>
+                        <td>${totalUnits.toFixed(2)}</td>
+                        <td>${formatCurrency(totalAmount)}</td>
+                    `;
+                    pumpmanSummaryBody.appendChild(totalRow);
+                    
+                    // Update chart
+                    updatePumpmanChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching pumpman summary:', error);
+                    pumpmanSummaryBody.innerHTML = '<tr><td colspan="3" class="text-center">Error loading data</td></tr>';
+                });
+        }
+        
+        // Update product chart
+        function updateProductChart(data) {
+            const ctx = document.getElementById('product-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (productChart) {
+                productChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const labels = data.map(item => item.product_type);
+            const amounts = data.map(item => item.total_amount);
+            const units = data.map(item => item.total_units);
+            
+            // Random colors for bars
+            const backgroundColors = data.map(() => {
+                const r = Math.floor(Math.random() * 200);
+                const g = Math.floor(Math.random() * 200);
+                const b = Math.floor(Math.random() * 200);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            });
+            
+            // Create new chart
+            productChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales Amount (₹)',
+                            data: amounts,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Units Sold',
+                            data: units,
+                            type: 'line',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Amount (₹)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Units'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update pumpman chart
+        function updatePumpmanChart(data) {
+            const ctx = document.getElementById('pumpman-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (pumpmanChart) {
+                pumpmanChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const labels = data.map(item => item.pumpman_id);
+            const amounts = data.map(item => item.total_amount);
+            const transactions = data.map(item => item.transaction_count);
+            
+            // Random colors for bars
+            const backgroundColors = data.map(() => {
+                const r = Math.floor(Math.random() * 200);
+                const g = Math.floor(Math.random() * 200);
+                const b = Math.floor(Math.random() * 200);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            });
+            
+            // Create new chart
+            pumpmanChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales Amount (₹)',
+                            data: amounts,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Transactions',
+                            data: transactions,
+                            type: 'line',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Amount (₹)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Transactions'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Event listeners for pagination
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchSales();
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            currentPage++;
+            fetchSales();
+        });
+        
+        // Event listener for filter form
+        filterForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // Update filter state
+            selectedBranch = branchFilter.value;
+            selectedProduct = productFilter.value;
+            selectedShift = shiftFilter.value;
+            startDate = startDateInput.value;
+            endDate = endDateInput.value;
+            
+            // Save branch to localStorage
+            localStorage.setItem('selectedBranch', selectedBranch);
+            
+            // Reset pagination
+            currentPage = 1;
+            
+            // Fetch data with new filters
+            fetchSales();
+            fetchProductSummary();
+            fetchPumpmanSummary();
+        });
+        
+        // Initialize
+        populateBranches();
+        fetchSales();
+        fetchProductSummary();
+        fetchPumpmanSummary();
+    });
+</script>
+{% endblock %}

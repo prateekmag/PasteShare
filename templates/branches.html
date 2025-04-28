@@ -1,0 +1,574 @@
+{% extends "layout.html" %}
+
+{% block title %}Branch Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1>Branch Management</h1>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+                    <i class="fas fa-plus"></i> Add Branch
+                </button>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle text-center" id="branchesTable" style="vertical-align: middle;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="white-space:nowrap;">ID</th>
+                                    <th style="white-space:nowrap;">Name</th>
+                                    <th style="white-space:nowrap;">Location</th>
+                                    <th style="white-space:nowrap;">Manager</th>
+                                    <th style="white-space:nowrap;">Status</th>
+                                    <th style="white-space:nowrap;">Subscription</th>
+                                    <th style="white-space:nowrap;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="branchesTableBody">
+                                <!-- Branches will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Branch Modal -->
+<div class="modal fade" id="addBranchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Branch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addBranchForm">
+                    <div class="mb-3">
+                        <label for="branch_id" class="form-label">Branch ID</label>
+                        <input type="text" class="form-control" id="branch_id" name="id" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="branch_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch_location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="branch_location" name="location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch_address" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="branch_address" name="address">
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch_contact" class="form-label">Contact Phone</label>
+                        <input type="text" class="form-control" id="branch_contact" name="contact_phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch_manager" class="form-label">Manager</label>
+                        <input type="text" class="form-control" id="branch_manager" name="manager">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="branch_opening" class="form-label">Opening Time</label>
+                            <input type="time" class="form-control" id="branch_opening" name="opening_time" value="06:00">
+                        </div>
+                        <div class="col">
+                            <label for="branch_closing" class="form-label">Closing Time</label>
+                            <input type="time" class="form-control" id="branch_closing" name="closing_time" value="22:00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch_status" class="form-label">Status</label>
+                        <select class="form-select" id="branch_status" name="status">
+                            <option value="active" selected>Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBranchBtn">Save Branch</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Branch Modal -->
+<div class="modal fade" id="editBranchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Branch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editBranchForm">
+                    <input type="hidden" id="edit_branch_id" name="id">
+                    <div class="mb-3">
+                        <label for="edit_branch_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="edit_branch_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_branch_location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="edit_branch_location" name="location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_branch_address" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="edit_branch_address" name="address">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_branch_contact" class="form-label">Contact Phone</label>
+                        <input type="text" class="form-control" id="edit_branch_contact" name="contact_phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_branch_manager" class="form-label">Manager</label>
+                        <input type="text" class="form-control" id="edit_branch_manager" name="manager">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="edit_branch_opening" class="form-label">Opening Time</label>
+                            <input type="time" class="form-control" id="edit_branch_opening" name="opening_time">
+                        </div>
+                        <div class="col">
+                            <label for="edit_branch_closing" class="form-label">Closing Time</label>
+                            <input type="time" class="form-control" id="edit_branch_closing" name="closing_time">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_branch_status" class="form-label">Status</label>
+                        <select class="form-select" id="edit_branch_status" name="status">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateBranchBtn">Update Branch</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Branch Confirmation Modal -->
+<div class="modal fade" id="deleteBranchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete branch "<span id="deleteBranchName"></span>"?</p>
+                <p class="text-danger">This action cannot be undone and may affect data in other parts of the system.</p>
+                <input type="hidden" id="deleteBranchId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBranchBtn">Delete Branch</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load branches when page loads
+        loadBranches();
+        
+        // Add branch
+        const saveBranchBtn = document.getElementById('saveBranchBtn');
+        if (saveBranchBtn) {
+            saveBranchBtn.addEventListener('click', function() {
+                saveBranch();
+            });
+        }
+        
+        // Update branch
+        const updateBranchBtn = document.getElementById('updateBranchBtn');
+        if (updateBranchBtn) {
+            updateBranchBtn.addEventListener('click', function() {
+                updateBranch();
+            });
+        }
+        
+        // Delete branch
+        const confirmDeleteBranchBtn = document.getElementById('confirmDeleteBranchBtn');
+        if (confirmDeleteBranchBtn) {
+            confirmDeleteBranchBtn.addEventListener('click', function() {
+                deleteBranch();
+            });
+        }
+        
+        // Generate a unique branch ID (e.g., BR-<timestamp>)
+        function generateBranchId() {
+            const now = new Date();
+            const y = now.getFullYear().toString().slice(-2);
+            const m = (now.getMonth() + 1).toString().padStart(2, '0');
+            const d = now.getDate().toString().padStart(2, '0');
+            const h = now.getHours().toString().padStart(2, '0');
+            const min = now.getMinutes().toString().padStart(2, '0');
+            const s = now.getSeconds().toString().padStart(2, '0');
+            return `BR${y}${m}${d}${h}${min}${s}`;
+        }
+        
+        // Autofill current location using browser geolocation and reverse geocoding
+        function autofillLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    // Use Nominatim reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            let address = data.display_name || `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                            document.getElementById('branch_location').value = address;
+                        })
+                        .catch(() => {
+                            document.getElementById('branch_location').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                        });
+                }, function(error) {
+                    document.getElementById('branch_location').placeholder = "Could not get location";
+                });
+            } else {
+                document.getElementById('branch_location').placeholder = "Geolocation not supported";
+            }
+        }
+        
+        // When Add Branch modal is shown, generate and set a new branch ID and autofill location
+        const addBranchModal = document.getElementById('addBranchModal');
+        addBranchModal.addEventListener('show.bs.modal', function () {
+            document.getElementById('branch_id').value = generateBranchId();
+            autofillLocation();
+        });
+    });
+    
+    // Load all branches
+    function loadBranches() {
+        // Add cache-busting parameter to prevent browser caching
+        fetch('/api/branch/branches?_=' + new Date().getTime(), {
+            cache: 'no-store', // Force fetch to bypass cache
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })
+            .then(response => response.json())
+            .then(branches => {
+                console.log("Loaded branches:", branches); // Debug log
+                const tableBody = document.getElementById('branchesTableBody');
+                tableBody.innerHTML = '';
+                
+                branches.forEach(branch => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${branch.id}</td>
+                        <td>${branch.name}</td>
+                        <td>${branch.location}</td>
+                        <td>${branch.manager || '-'}</td>
+                        <td><span class="badge ${getBadgeColor(branch.status)}">${branch.status}</span></td>
+                        <td id="subscription-status-${branch.id}"><span class="text-muted">Loading...</span></td>
+                        <td class="action-cell">
+                            <button class="btn btn-info btn-action edit-branch" data-branch-id="${branch.id}" data-bs-toggle="modal" data-bs-target="#editBranchModal">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-danger btn-action delete-branch" data-branch-id="${branch.id}" data-branch-name="${branch.name}" data-bs-toggle="modal" data-bs-target="#deleteBranchModal">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            <a class="btn btn-secondary btn-action" href="/branch/${branch.id}/subscription">
+                                <i class="fas fa-credit-card"></i> Subscription
+                            </a>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                    
+                    // Fetch and display subscription status
+                    fetch(`/branch/${branch.id}/subscription?ajax=1`).then(r => r.json()).then(data => {
+                        const cell = document.getElementById(`subscription-status-${branch.id}`);
+                        if (data.subscription) {
+                            cell.innerHTML = `<span class="badge ${data.active ? 'bg-success' : 'bg-danger'}">${data.subscription.plan_type.charAt(0).toUpperCase() + data.subscription.plan_type.slice(1)} (${data.active ? 'Active' : 'Inactive'})</span>`;
+                        } else {
+                            cell.innerHTML = '<span class="badge bg-secondary">None</span>';
+                        }
+                    }).catch(() => {
+                        const cell = document.getElementById(`subscription-status-${branch.id}`);
+                        cell.innerHTML = '<span class="badge bg-secondary">Error</span>';
+                    });
+                });
+                
+                // Attach event listeners to edit buttons
+                document.querySelectorAll('.edit-branch').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const branchId = this.getAttribute('data-branch-id');
+                        editBranch(branchId);
+                    });
+                });
+                
+                // Attach event listeners to delete buttons
+                document.querySelectorAll('.delete-branch').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const branchId = this.getAttribute('data-branch-id');
+                        const branchName = this.getAttribute('data-branch-name');
+
+                        document.getElementById('deleteBranchId').value = branchId;
+                        document.getElementById('deleteBranchName').textContent = branchName;
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading branches:', error);
+                showAlert('Error loading branches. Please try again later.', 'danger');
+            });
+    }
+    
+    // Save a new branch
+    function saveBranch() {
+        const form = document.getElementById('addBranchForm');
+        const formData = new FormData(form);
+        const branchData = {};
+        
+        formData.forEach((value, key) => {
+            branchData[key] = value;
+        });
+        
+        // Add current timestamp as created_at
+        branchData.created_at = new Date().toISOString();
+        
+        fetch('/api/branch/branches', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(branchData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Failed to add branch');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addBranchModal'));
+            modal.hide();
+            
+            form.reset();
+            showAlert('Branch added successfully', 'success');
+            loadBranches();
+        })
+        .catch(error => {
+            console.error('Error adding branch:', error);
+            showAlert(error.message, 'danger');
+        });
+    }
+    
+    // Edit an existing branch
+    function editBranch(branchId) {
+        fetch(`/api/branch/branches?branch_id=${branchId}`)
+            .then(response => response.json())
+            .then(branch => {
+                document.getElementById('edit_branch_id').value = branch.id;
+                document.getElementById('edit_branch_name').value = branch.name;
+                document.getElementById('edit_branch_location').value = branch.location;
+                document.getElementById('edit_branch_address').value = branch.address || '';
+                document.getElementById('edit_branch_contact').value = branch.contact_phone || '';
+                document.getElementById('edit_branch_manager').value = branch.manager || '';
+                document.getElementById('edit_branch_opening').value = branch.opening_time || '06:00';
+                document.getElementById('edit_branch_closing').value = branch.closing_time || '22:00';
+                document.getElementById('edit_branch_status').value = branch.status || 'active';
+            })
+            .catch(error => {
+                console.error('Error fetching branch details:', error);
+                showAlert('Error fetching branch details. Please try again later.', 'danger');
+            });
+    }
+    
+    // Update an existing branch
+    function updateBranch() {
+        const form = document.getElementById('editBranchForm');
+        const formData = new FormData(form);
+        const branchData = {};
+        const branchId = document.getElementById('edit_branch_id').value;
+        
+        formData.forEach((value, key) => {
+            if (key !== 'id') { // Skip the ID field
+                branchData[key] = value;
+            }
+        });
+        
+        fetch(`/api/branch/branches/${branchId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(branchData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Failed to update branch');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editBranchModal'));
+            modal.hide();
+            
+            showAlert('Branch updated successfully', 'success');
+            
+            // Clear localStorage to ensure fresh branch data on all pages
+            localStorage.removeItem('selectedBranch');
+            
+            // Reload the branches list with fresh data
+            loadBranches();
+            
+            // Add refresh prompt to parent window
+            showRefreshNotice();
+        })
+        .catch(error => {
+            console.error('Error updating branch:', error);
+            showAlert(error.message, 'danger');
+        });
+    }
+    
+    // Delete a branch
+    function deleteBranch() {
+        const branchId = document.getElementById('deleteBranchId').value;
+        
+        fetch(`/api/branch/branches/${branchId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Failed to delete branch');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteBranchModal'));
+            modal.hide();
+            
+            showAlert('Branch deleted successfully', 'success');
+            
+            // Clear localStorage to ensure fresh branch data on all pages
+            localStorage.removeItem('selectedBranch');
+            
+            // Reload the branches list with fresh data
+            loadBranches();
+            
+            // Add refresh prompt to parent window
+            showRefreshNotice();
+        })
+        .catch(error => {
+            console.error('Error deleting branch:', error);
+            showAlert(error.message, 'danger');
+        });
+    }
+    
+    // Helper functions
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 150);
+        }, 5000);
+    }
+    
+    function getBadgeColor(status) {
+        switch (status) {
+            case 'active':
+                return 'bg-success';
+            case 'inactive':
+                return 'bg-secondary';
+            case 'maintenance':
+                return 'bg-warning text-dark';
+            default:
+                return 'bg-info';
+        }
+    }
+    
+    // Shows a notice to refresh other pages - moved to main.js
+    function showRefreshNotice() {
+        // Set cookie to notify other pages to reload
+        document.cookie = "branch_refresh=true; path=/; max-age=30";
+        
+        // Show notification that user should refresh other pages to see updated branch list
+        const refreshNotice = document.createElement('div');
+        refreshNotice.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-4';
+        refreshNotice.style.zIndex = '9999';
+        refreshNotice.innerHTML = `
+            <strong>Branches updated!</strong> Branch changes saved successfully.
+            <button type="button" class="btn btn-sm btn-primary ms-3" onclick="window.location.reload(true)">Refresh This Page</button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(refreshNotice);
+        
+        // Auto dismiss after 8 seconds
+        setTimeout(() => {
+            refreshNotice.classList.remove('show');
+            setTimeout(() => refreshNotice.remove(), 150);
+        }, 8000);
+    }
+</script>
+<style>
+.btn-action {
+    min-width: 90px;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    padding: 0.375rem 0.75rem;
+}
+.action-cell {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+#branchesTable th, #branchesTable td {
+    vertical-align: middle;
+    text-align: center;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Totalizer Readings Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title">Totalizer Readings Overview</h5>
+                    <p class="card-text">Manage totalizer readings for pumps and track fuel sales by shift.</p>
+                    <div class="d-flex">
+                        <a href="/totalizer/readings/add" class="btn btn-primary me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                            Add Totalizer Reading
+                        </a>
+                        <a href="/totalizer/sales" class="btn btn-info">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                            View Sales Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Totalizer Readings</h5>
+                    <div class="d-flex align-items-center">
+                        <select id="reading-type-filter" class="form-select form-select-sm me-2" style="width: auto;">
+                            <option value="all">All Types</option>
+                            <option value="opening">Opening Only</option>
+                            <option value="closing">Closing Only</option>
+                        </select>
+                        <select id="branch-filter" class="form-select form-select-sm" style="width: auto;">
+                            <option value="all">All Branches</option>
+                            <!-- Branch options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Type</th>
+                                    <th>Pump ID</th>
+                                    <th>Nozzle ID</th>
+                                    <th>Product</th>
+                                    <th>Reading Value</th>
+                                    <th>Shift</th>
+                                    <th>Pumpman</th>
+                                    <th>Branch</th>
+                                    <th>Image</th>
+                                </tr>
+                            </thead>
+                            <tbody id="readings-table-body">
+                                <!-- Loading message -->
+                                <tr id="loading-row">
+                                    <td colspan="10" class="text-center">Loading readings...</td>
+                                </tr>
+                                <!-- No readings message (hidden by default) -->
+                                <tr id="no-readings-row" style="display: none;">
+                                    <td colspan="10" class="text-center">No readings found. Add a new reading using the button above.</td>
+                                </tr>
+                                <!-- Readings will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-dark text-light d-flex justify-content-between align-items-center">
+                    <span id="readings-count">0 readings</span>
+                    <div class="pagination-controls">
+                        <button id="prev-page" class="btn btn-sm btn-primary me-2" disabled>Previous</button>
+                        <span id="page-info">Page 1</span>
+                        <button id="next-page" class="btn btn-sm btn-primary ms-2" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const readingsTableBody = document.getElementById('readings-table-body');
+        const loadingRow = document.getElementById('loading-row');
+        const noReadingsRow = document.getElementById('no-readings-row');
+        const readingsCount = document.getElementById('readings-count');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const readingTypeFilter = document.getElementById('reading-type-filter');
+        const branchFilter = document.getElementById('branch-filter');
+        
+        // Pagination state
+        let currentPage = 1;
+        let totalPages = 1;
+        const limit = 10;
+        
+        // Filter state
+        let selectedReadingType = 'all';
+        let selectedBranch = localStorage.getItem('selectedBranch') || 'all';
+        
+        // Set initial branch filter value
+        branchFilter.value = selectedBranch;
+        
+        // Populate branches dropdown
+        function populateBranches() {
+            const branches = [
+                { id: 'branch-1', name: 'Main Station' },
+                { id: 'branch-2', name: 'Highway Station' },
+                { id: 'branch-3', name: 'City Center' }
+            ];
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.id;
+                option.textContent = branch.name;
+                branchFilter.appendChild(option);
+            });
+        }
+        
+        // Fetch totalizer readings with filters
+        function fetchReadings() {
+            // Show loading
+            loadingRow.style.display = 'table-row';
+            noReadingsRow.style.display = 'none';
+            
+            // Clear existing readings
+            const rows = readingsTableBody.querySelectorAll('tr:not(#loading-row):not(#no-readings-row)');
+            rows.forEach(row => row.remove());
+            
+            // Calculate offset
+            const offset = (currentPage - 1) * limit;
+            
+            // Build URL with query parameters
+            let url = `/api/totalizer/readings?limit=${limit}&offset=${offset}`;
+            
+            if (selectedReadingType !== 'all') {
+                url += `&reading_type=${selectedReadingType}`;
+            }
+            
+            if (selectedBranch !== 'all') {
+                url += `&branch_id=${selectedBranch}`;
+            }
+            
+            // Fetch readings from API
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading
+                    loadingRow.style.display = 'none';
+                    
+                    // Check if no readings
+                    if (!data.length) {
+                        noReadingsRow.style.display = 'table-row';
+                        readingsCount.textContent = '0 readings';
+                        return;
+                    }
+                    
+                    // Display readings
+                    data.forEach(reading => {
+                        const row = document.createElement('tr');
+                        
+                        // Format date
+                        const date = new Date(reading.timestamp);
+                        const formattedDate = date.toLocaleString();
+                        
+                        // Add reading type badge with appropriate color
+                        const badgeClass = reading.reading_type === 'opening' ? 'bg-success' : 'bg-danger';
+                        const typeDisplay = `<span class="badge ${badgeClass}">${reading.reading_type.toUpperCase()}</span>`;
+                        
+                        // Add image thumbnail or placeholder
+                        const imageDisplay = reading.totalizer_image_url ? 
+                            `<a href="${reading.totalizer_image_url}" target="_blank"><img src="${reading.totalizer_image_url}" alt="Totalizer" width="50" height="50" class="img-thumbnail"></a>` : 
+                            '<span class="text-muted">No image</span>';
+                        
+                        row.innerHTML = `
+                            <td>${formattedDate}</td>
+                            <td>${typeDisplay}</td>
+                            <td>${reading.pump_id}</td>
+                            <td>${reading.nozzle_id}</td>
+                            <td>${reading.product_type}</td>
+                            <td>${reading.reading_value.toFixed(2)}</td>
+                            <td>${reading.shift}</td>
+                            <td>${reading.pumpman_id}</td>
+                            <td>${reading.branch_id}</td>
+                            <td>${imageDisplay}</td>
+                        `;
+                        
+                        readingsTableBody.appendChild(row);
+                    });
+                    
+                    // Update readings count
+                    readingsCount.textContent = `${data.length} readings`;
+                    
+                    // Update pagination
+                    // In a real app, we would get total count from API
+                    // For now, we just enable/disable next button based on returned results
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = data.length < limit;
+                    pageInfo.textContent = `Page ${currentPage}`;
+                })
+                .catch(error => {
+                    console.error('Error fetching readings:', error);
+                    loadingRow.style.display = 'none';
+                    noReadingsRow.style.display = 'table-row';
+                    noReadingsRow.cells[0].textContent = 'Error loading readings. Please try again.';
+                });
+        }
+        
+        // Event listeners for pagination
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchReadings();
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            currentPage++;
+            fetchReadings();
+        });
+        
+        // Event listeners for filters
+        readingTypeFilter.addEventListener('change', () => {
+            selectedReadingType = readingTypeFilter.value;
+            currentPage = 1; // Reset to first page
+            fetchReadings();
+        });
+        
+        branchFilter.addEventListener('change', () => {
+            selectedBranch = branchFilter.value;
+            localStorage.setItem('selectedBranch', selectedBranch);
+            currentPage = 1; // Reset to first page
+            fetchReadings();
+        });
+        
+        // Initialize
+        populateBranches();
+        fetchReadings();
+    });
+</script>
+{% endblock %}

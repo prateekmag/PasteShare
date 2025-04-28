@@ -1,0 +1,293 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Add Transaction{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Record Credit Transaction</h5>
+                    <div>
+                        <a href="/credit-customers/{{ customer.customer_id }}" class="btn btn-outline-light btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                            Back to Customer
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Customer Information</h6>
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">Name:</dt>
+                                        <dd class="col-sm-8">{{ customer.name }}</dd>
+                                        
+                                        <dt class="col-sm-4">ID:</dt>
+                                        <dd class="col-sm-8">{{ customer.customer_id }}</dd>
+                                        
+                                        <dt class="col-sm-4">Type:</dt>
+                                        <dd class="col-sm-8">
+                                            {% if customer.customer_type == 'government' %}
+                                                <span class="badge bg-info">GOVERNMENT</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">GENERAL</span>
+                                            {% endif %}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Credit Status</h6>
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5">Credit Limit:</dt>
+                                        <dd class="col-sm-7">₹{{ "%.2f"|format(customer.credit_limit) }}</dd>
+                                        
+                                        <dt class="col-sm-5">Current Balance:</dt>
+                                        <dd class="col-sm-7 {% if customer.current_balance > 0 %}text-danger fw-bold{% endif %}">
+                                            ₹{{ "%.2f"|format(customer.current_balance) }}
+                                        </dd>
+                                        
+                                        <dt class="col-sm-5">Available Credit:</dt>
+                                        <dd class="col-sm-7 {% if customer.credit_limit - customer.current_balance <= 0 %}text-danger fw-bold{% endif %}">
+                                            ₹{{ "%.2f"|format(customer.credit_limit - customer.current_balance) }}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="/credit-customers/{{ customer.customer_id }}/add-transaction" method="POST">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transaction_type" class="form-label">Transaction Type<span class="text-danger">*</span></label>
+                                    <select class="form-select" id="transaction_type" name="transaction_type" required>
+                                        <option value="" selected disabled>Select Type</option>
+                                        <option value="purchase">Purchase (Add to Balance)</option>
+                                        <option value="payment">Payment (Reduce Balance)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Amount (₹)<span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="payment-fields" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="payment_method" class="form-label">Payment Method</label>
+                                        <select class="form-select" id="payment_method" name="payment_method">
+                                            <option value="" selected disabled>Select Method</option>
+                                            <option value="cash">Cash</option>
+                                            <option value="bank_transfer">Bank Transfer</option>
+                                            <option value="cheque">Cheque</option>
+                                            <option value="upi">UPI</option>
+                                            <option value="credit_card">Credit Card</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="reference_number" class="form-label">Reference Number</label>
+                                        <input type="text" class="form-control" id="reference_number" name="reference_number">
+                                        <div class="form-text">Cheque no., transaction ID, etc.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="branch_id" class="form-label">Branch<span class="text-danger">*</span></label>
+                            <select class="form-select" id="branch_id" name="branch_id" required>
+                                <option value="" selected disabled>Select Branch</option>
+                                <option value="branch-1">Main Station</option>
+                                <option value="branch-2">Highway Station</option>
+                                <option value="branch-3">City Center</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="recorded_by" class="form-label">Recorded By<span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="recorded_by" name="recorded_by" required>
+                        </div>
+
+                        <div id="transaction-verification" class="alert alert-warning" style="display: none;">
+                            <h5 class="alert-heading">Verify Transaction Details!</h5>
+                            <p>Please verify the transaction details before submission.</p>
+                            <div id="verification-details"></div>
+                            <hr>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="verification-check" required>
+                                <label class="form-check-label" for="verification-check">
+                                    I confirm that the transaction details are correct
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/credit-customers/{{ customer.customer_id }}" class="btn btn-secondary">Cancel</a>
+                            <button type="button" id="verify-btn" class="btn btn-warning">Verify Transaction</button>
+                            <button type="submit" id="submit-btn" class="btn btn-primary" style="display: none;">Submit Transaction</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const form = document.querySelector('form');
+        const transactionTypeSelect = document.getElementById('transaction_type');
+        const paymentFields = document.getElementById('payment-fields');
+        const verifyBtn = document.getElementById('verify-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const transactionVerification = document.getElementById('transaction-verification');
+        const verificationDetails = document.getElementById('verification-details');
+        const verificationCheck = document.getElementById('verification-check');
+        const branchSelect = document.getElementById('branch_id');
+        const amountInput = document.getElementById('amount');
+        
+        // Set branch ID from localStorage if available
+        const savedBranch = localStorage.getItem('selectedBranch');
+        if (savedBranch && savedBranch !== 'all') {
+            branchSelect.value = savedBranch;
+        }
+        
+        // Show/hide payment fields based on transaction type
+        transactionTypeSelect.addEventListener('change', function() {
+            if (this.value === 'payment') {
+                paymentFields.style.display = 'block';
+            } else {
+                paymentFields.style.display = 'none';
+            }
+        });
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return '₹' + parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+        
+        // Show verification details
+        verifyBtn.addEventListener('click', function() {
+            // Validate form
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            // Get form values
+            const transactionType = transactionTypeSelect.value;
+            const amount = amountInput.value;
+            const paymentMethod = document.getElementById('payment_method').value;
+            const referenceNumber = document.getElementById('reference_number').value;
+            const notes = document.getElementById('notes').value;
+            const branch = branchSelect.options[branchSelect.selectedIndex].text;
+            const recordedBy = document.getElementById('recorded_by').value;
+            
+            // Calculate new balance
+            let newBalance = 0;
+            if (transactionType === 'purchase') {
+                newBalance = {{ customer.current_balance }} + parseFloat(amount);
+            } else {
+                newBalance = {{ customer.current_balance }} - parseFloat(amount);
+            }
+            
+            // Check credit limit for purchases
+            let warningMessage = '';
+            if (transactionType === 'purchase') {
+                const availableCredit = {{ customer.credit_limit }} - {{ customer.current_balance }};
+                if (parseFloat(amount) > availableCredit) {
+                    warningMessage = `<div class="alert alert-danger mt-3">
+                        <strong>Warning:</strong> This purchase exceeds the available credit by ${formatCurrency(parseFloat(amount) - availableCredit)}.
+                    </div>`;
+                }
+            }
+            
+            // Format verification details
+            let typeDisplay = transactionType === 'purchase' ? 
+                '<span class="badge bg-danger">PURCHASE</span>' : 
+                '<span class="badge bg-success">PAYMENT</span>';
+                
+            verificationDetails.innerHTML = `
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Transaction Type:</span>
+                        <strong>${typeDisplay}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Amount:</span>
+                        <strong>${formatCurrency(amount)}</strong>
+                    </li>
+                    ${transactionType === 'payment' && paymentMethod ? `
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Payment Method:</span>
+                        <strong>${paymentMethod}</strong>
+                    </li>` : ''}
+                    ${transactionType === 'payment' && referenceNumber ? `
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Reference Number:</span>
+                        <strong>${referenceNumber}</strong>
+                    </li>` : ''}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Recorded By:</span>
+                        <strong>${recordedBy}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Branch:</span>
+                        <strong>${branch}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Current Balance:</span>
+                        <strong>${formatCurrency({{ customer.current_balance }})}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>New Balance:</span>
+                        <strong class="${newBalance > 0 ? 'text-danger' : ''} fw-bold">${formatCurrency(newBalance)}</strong>
+                    </li>
+                </ul>
+                ${warningMessage}
+            `;
+            
+            // Show verification section
+            transactionVerification.style.display = 'block';
+            verifyBtn.style.display = 'none';
+            submitBtn.style.display = 'block';
+            
+            // Scroll to verification section
+            transactionVerification.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Enable/disable submit button based on verification checkbox
+        verificationCheck.addEventListener('change', function() {
+            submitBtn.disabled = !this.checked;
+        });
+        
+        // Initially disable submit button
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

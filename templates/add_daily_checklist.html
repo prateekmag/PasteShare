@@ -1,0 +1,158 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Add Daily Checklist{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h3 mb-0">Create Daily Checklist</h2>
+            <a href="/daily-checklist" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left me-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Checklists
+            </a>
+        </div>
+        <p class="text-muted">Record daily station operational tasks</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">Daily Checklist Details</h5>
+            </div>
+            <div class="card-body">
+                <form action="/daily-checklist/add" method="POST">
+                    <div class="mb-3">
+                        <label for="branch_id" class="form-label">Branch</label>
+                        <select class="form-select" id="branch_id" name="branch_id" required>
+                            <option value="">Select Branch</option>
+                            {% for branch in branches %}
+                                {% if branch.status == 'active' %}
+                                    <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="completed_by" class="form-label">Completed By</label>
+                        <input type="text" class="form-control" id="completed_by" name="completed_by" placeholder="Your Name" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Tasks</label>
+                        <div class="card">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="dispenser_test_done" name="dispenser_test_done">
+                                        <label class="form-check-label d-flex justify-content-between align-items-center" for="dispenser_test_done">
+                                            <div>
+                                                <span class="d-block fw-medium">Dispenser Test Done</span>
+                                                <small class="text-muted">Verification of dispenser accuracy</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="pump_cleaning_done" name="pump_cleaning_done">
+                                        <label class="form-check-label d-flex justify-content-between align-items-center" for="pump_cleaning_done">
+                                            <div>
+                                                <span class="d-block fw-medium">Pump Cleaning Done</span>
+                                                <small class="text-muted">Cleaning of pump exteriors and nozzles</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bathroom_cleaning_done" name="bathroom_cleaning_done">
+                                        <label class="form-check-label d-flex justify-content-between align-items-center" for="bathroom_cleaning_done">
+                                            <div>
+                                                <span class="d-block fw-medium">Bathroom Cleaning Done</span>
+                                                <small class="text-muted">Cleaning and restocking of bathroom facilities</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Enter any additional notes, issues or observations"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Submit Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">Guide & Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Dispenser Test</h6>
+                    <p class="text-muted small">This test verifies the accuracy of fuel dispensers. Ensure that the test is conducted at the start of the day for all dispensers. Use the standard 5L container for verification.</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Pump Cleaning</h6>
+                    <p class="text-muted small">Clean all pump exteriors, nozzles, and hoses. Check for any damage or leaks during the cleaning process. Report any issues in the notes section.</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Bathroom Cleaning</h6>
+                    <p class="text-muted small">Ensure bathrooms are thoroughly cleaned. Check and restock soap, tissue paper, and hand towels. Report any plumbing issues or damage in the notes section.</p>
+                </div>
+                
+                <div class="alert alert-info small mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-info me-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <strong>Important:</strong> Checklists should be completed daily at the start of the first shift. Use the notes section to document any exceptional issues or concerns.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pre-select the branch from the selector in the navigation
+        const branchSelector = document.getElementById('branch-selector');
+        const formBranchSelector = document.getElementById('branch_id');
+        
+        if (branchSelector && formBranchSelector) {
+            const selectedBranch = branchSelector.value;
+            
+            // Only pre-select if it's a specific branch (not 'all')
+            if (selectedBranch !== 'all') {
+                // Find option with matching value
+                const optionExists = Array.from(formBranchSelector.options)
+                    .some(option => option.value === selectedBranch);
+                
+                if (optionExists) {
+                    formBranchSelector.value = selectedBranch;
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

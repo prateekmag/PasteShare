@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetrolPro - {% block title %}Fuel Management System{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        /* Custom styles for sidebar user actions */
+        .user-controls .list-group-item {
+            transition: background-color 0.2s ease;
+        }
+
+        .user-controls .list-group-item:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-spinner" class="spinner"></div>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <a href="/dashboard" class="d-flex align-items-center text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M3 22h12"></path><path d="M8 6h7a2 2 0 0 1 2 2v10"></path><path d="M9 10v7"></path><path d="M13 10v7"></path><path d="M9 6V2"></path><path d="M12 6V2"></path></svg>
+                    <span class="fs-4 fw-bold">PetrolPro</span>
+                </a>
+            </div>
+
+            <div class="branch-selector mb-3 px-3">
+                {% if current_user.is_admin() %}
+                <!-- Removed sidebar branch selector to avoid duplicate ID conflict -->
+                <!-- <select class="form-select" id="branch-selector">
+                    <option value="all">All Branches (Admin)</option>
+                </select> -->
+                {% endif %}
+            </div>
+
+            <ul class="list-unstyled">
+                <li class="sidebar-item">
+                    <a href="/dashboard" class="sidebar-link {% if request.path == '/dashboard' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/fuel" class="sidebar-link {% if request.path == '/fuel' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M3 22h12"></path><path d="M8 6h7a2 2 0 0 1 2 2v10"></path><path d="M9 10v7"></path><path d="M13 10v7"></path><path d="M9 6V2"></path><path d="M12 6V2"></path></svg>
+                        Fuel Management
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/sales" class="sidebar-link {% if request.path == '/sales' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M20 5H4a2 2 0 0 1 0-4h14v14a2 2 0 0 0 2 2h4v-5"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+                        Sales
+                    </a>
+                </li>
+                {% if current_user.is_admin() or current_user.is_branch_manager() %}
+                <li class="sidebar-item">
+                    <a href="/staff" class="sidebar-link {% if request.path == '/staff' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        Staff
+                    </a>
+                </li>
+                {% endif %}
+                <li class="sidebar-item">
+                    <a href="/attendance" class="sidebar-link {% if request.path == '/attendance' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+                        Attendance
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/expenses" class="sidebar-link {% if request.path == '/expenses' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+                        Expenses
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/reports" class="sidebar-link {% if request.path == '/reports' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>
+                        Reports
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/ai/dashboard" class="sidebar-link {% if '/ai/' in request.path %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M12 2a10 10 0 0 1 10 10c0 2.5-.9 4.73-2.42 6.5"></path><path d="M17.5 12H12l-3-6"></path><path d="M8.89 16.94a10.11 10.11 0 0 1-5.94-8.32"></path><path d="M22 22v-2a4 4 0 0 0-4-4h-2a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="10" r="3"></circle></svg>
+                        AI Analytics
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/purchase-orders" class="sidebar-link {% if '/purchase-orders' in request.path %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M9 17h6"></path><path d="M9 12h6"></path><path d="M12 3L4 10v11h16V10L12 3z"></path></svg>
+                        Purchase Orders
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/daily-checklist" class="sidebar-link {% if '/daily-checklist' in request.path %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"></path><path d="M16 13H8"></path><path d="M10 9H8"></path></svg>
+                        Daily Checklist
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/totalizer" class="sidebar-link {% if '/totalizer' in request.path %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Totalizer Readings
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/suppliers" class="sidebar-link {% if '/suppliers' in request.path %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="7" width="18" height="13" rx="2" ry="2"></rect><path d="M16 3h-1a2 2 0 0 0-2 2v3"></path><path d="M8 3h1a2 2 0 0 1 2 2v3"></path></svg>
+                        Suppliers
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/subscription-plans/simple" class="sidebar-link {% if request.path.startswith('/subscription-plans/simple') %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M16 3v5"/><path d="M8 3v5"/></svg>
+                        Subscription Plans
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    {% if current_user.is_admin() %}
+                    <a href="/branches" class="sidebar-link {% if request.path == '/branches' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M6 3v12"></path><path d="M18 3v6"></path><path d="M6 15a6 6 0 0 0 12 0"></path></svg>
+                        Branch Management
+                    </a>
+                    {% endif %}
+                </li>
+                <li class="sidebar-item">
+                    <a href="/categories" class="sidebar-link {% if request.path == '/categories' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><line x1="8" y1="6" x2="16" y2="6"></line><line x1="8" y1="12" x2="16" y2="12"></line><rect x="2" y="4" width="4" height="16" rx="2"></rect></svg>
+                        Categories
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="/subscriptions" class="sidebar-link {% if '/subscriptions' in request.path %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="8" width="18" height="13" rx="2" ry="2"></rect><path d="M16 3h-1a2 2 0 0 0-2 2v3"></path><path d="M8 3h1a2 2 0 0 1 2 2v3"></path></svg>
+                        Subscriptions
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="{{ url_for('fuel_types_view') }}" class="sidebar-link {% if request.path == url_for('fuel_types_view') %}active{% endif %}">
+                        <i class="bi bi-fuel-pump me-2"></i> Fuel Types
+                    </a>
+                </li>
+                {% if current_user.is_admin() %}
+                <li class="sidebar-item">
+                    <a href="/admin/notifications" class="sidebar-link {% if request.path.startswith('/admin/notifications') %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Send Notification
+                    </a>
+                </li>
+                {% endif %}
+                <li class="sidebar-item d-none" id="admin-section">
+                    <a href="/admin" class="sidebar-link {% if request.path == '/admin' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M19.13 5A10 10 0 0 0 12 2v8h8a10 10 0 0 0-.87-5Z"></path></svg>
+                        Admin Dashboard
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer mt-auto">
+                <div class="user-controls px-3 py-2 mb-2">
+                    <div class="list-group list-group-flush bg-transparent border-0">
+                        <a href="/profile" class="list-group-item list-group-item-action bg-transparent border-0 text-light py-1 ps-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Profile
+                        </a>
+                        <a href="/settings" class="list-group-item list-group-item-action bg-transparent border-0 text-light py-1 ps-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1 1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Settings
+                        </a>
+                        <a href="/auth/logout" class="list-group-item list-group-item-action bg-transparent border-0 text-light py-1 ps-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+                <div class="user-info d-flex align-items-center px-3 py-2 border-top border-secondary">
+                    <div class="avatar bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                        <span class="text-white fw-bold">
+                            {{ (current_user.username[0] ~ (current_user.username.split(' ')[1][0] if current_user.username.split(' ')|length > 1 else ''))|upper }}
+                        </span>
+                    </div>
+                    <div>
+                        <div class="fw-medium">{{ current_user.username }}</div>
+                        <small class="text-muted">{{ current_user.role|replace('_', ' ')|title }}</small>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content" class="content">
+            <header class="content-header bg-dark py-2 px-3 d-flex justify-content-between align-items-center">
+                <button type="button" id="sidebarCollapse" class="btn btn-primary btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown me-3">
+                        <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span class="badge bg-danger">3</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Tank #2 is low on fuel</a></li>
+                            <li><a class="dropdown-item" href="#">New sales report available</a></li>
+                            <li><a class="dropdown-item" href="#">Staff attendance alert</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="row">
+                    <div class="col-12">
+                        <h1 class="mb-4">{% block page_title %}{% endblock %}</h1>
+                    </div>
+                </div>
+
+                {% block content %}{% endblock %}
+            </div>
+
+            <footer class="content-footer bg-dark text-light py-3 mt-5">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-0">PetrolPro - Fuel Management System</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <p class="mb-0 text-muted">&copy; 2025 PetrolPro. All rights reserved.</p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Flag that can be set by server to force branch reload
+        window.forceBranchReload = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for branch refresh (moved to main.js)
+            if (typeof checkBranchRefresh === 'function' && checkBranchRefresh()) {
+                return; // Exit early if page refresh is needed
+            }
+
+            // Toggle sidebar
+            document.getElementById('sidebarCollapse').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+                document.getElementById('content').classList.toggle('expanded');
+            });
+
+            // Sidebar is now always scrollable by CSS
+            // No need for mouseenter/mouseleave events anymore
+
+            // Load branches dynamically with cache control (function in main.js)
+            if (typeof loadBranches === 'function') {
+                loadBranches(window.forceBranchReload);
+            } else {
+                console.error("loadBranches function not found - please check that main.js is loaded");
+            }
+
+            const branchSelector = document.getElementById('branch-selector');
+            if (branchSelector) {
+                branchSelector.addEventListener('change', function() {
+                    // Store selected branch in localStorage
+                    localStorage.setItem('selectedBranch', this.value);
+
+                    // Show/hide admin section based on selection
+                    if (this.value === 'all') {
+                        document.getElementById('admin-section').classList.remove('d-none');
+                    } else {
+                        document.getElementById('admin-section').classList.add('d-none');
+                    }
+
+                    // Refresh data based on selected branch
+                    if (typeof refreshData === 'function') {
+                        refreshData(this.value);
+                    }
+                });
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

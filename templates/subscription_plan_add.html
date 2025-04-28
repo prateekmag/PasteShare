@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block title %}Add Subscription Plan{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 col-md-6 mx-auto">
+            <h2>Add Subscription Plan</h2>
+            {% if msg %}
+                <div class="alert alert-info">{{ msg }}</div>
+            {% endif %}
+            <form method="post" action="">
+                <div class="mb-3">
+                    <label for="plan_type" class="form-label">Plan Type</label>
+                    <input type="text" class="form-control" id="plan_type" name="plan_type" required maxlength="32">
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount (₹)</label>
+                    <input type="number" class="form-control" id="amount" name="amount" required min="0" step="0.01">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Plan</button>
+                <a href="/subscription-plans/simple" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

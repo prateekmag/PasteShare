@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}Subscriptions Overview{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Branch Subscriptions</h2>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <table class="table table-hover text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Branch ID</th>
+                                <th>Plan</th>
+                                <th>Amount</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                {# Removed Actions column #}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in subscriptions %}
+                            <tr>
+                                <td>{{ sub.branch_id }}</td>
+                                <td>{{ sub.plan_type|capitalize }}</td>
+                                <td>₹{{ sub.amount }}</td>
+                                <td>{{ sub.start_date }}</td>
+                                <td>{{ sub.end_date }}</td>
+                                <td>
+                                    {% if sub.start_date <= today <= sub.end_date %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

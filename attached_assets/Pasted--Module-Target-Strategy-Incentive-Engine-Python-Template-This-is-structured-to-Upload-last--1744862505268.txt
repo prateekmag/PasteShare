@@ -1,0 +1,135 @@
+🧩 Module: Target Strategy & Incentive Engine (Python Template)
+This is structured to:
+
+Upload last year’s sales data
+
+Set target % increase for current month
+
+Auto-calculate: monthly, weekly, daily, and per-pumpman targets
+
+Show each pumpman's dashboard with real-time targets & incentive visibility
+
+Allow admin to configure incentive plans and durations
+
+🗂️ File Structure:
+arduino
+Copy
+Edit
+/target_module
+  ├── main.py
+  ├── config.py
+  ├── sales_data.csv
+  ├── target_calculator.py
+  ├── user_dashboard.py
+  ├── admin_panel.py
+  └── utils.py
+✅ 1. sales_data.csv
+Upload format:
+
+csv
+Copy
+Edit
+month,sales_litres
+2024-03,100000
+2024-04,105000
+...
+⚙️ 2. config.py
+python
+Copy
+Edit
+# Configuration file
+INCENTIVE_DURATION_YEARS = 1  # Can be changed by admin
+DEFAULT_TARGET_INCREASE_PERCENT = 10  # Used if not overridden
+🧮 3. target_calculator.py
+python
+Copy
+Edit
+import pandas as pd
+from datetime import datetime
+from config import DEFAULT_TARGET_INCREASE_PERCENT
+
+def load_sales_data(file_path="sales_data.csv"):
+    return pd.read_csv(file_path)
+
+def get_last_year_sales(sales_df, target_month):
+    year_ago = (datetime.strptime(target_month, "%Y-%m") - pd.DateOffset(years=1)).strftime("%Y-%m")
+    return sales_df[sales_df['month'] == year_ago]['sales_litres'].values[0]
+
+def calculate_targets(last_year_sales, increase_percent, pumpmen_count):
+    monthly_target = last_year_sales * (1 + increase_percent / 100)
+    weeks_in_month = 4  # Simplified
+    weekly_target = monthly_target / weeks_in_month
+    daily_target = weekly_target / 7
+    individual_target = daily_target / pumpmen_count
+    return {
+        "monthly_target": monthly_target,
+        "weekly_target": weekly_target,
+        "daily_target": daily_target,
+        "individual_target": individual_target
+    }
+🧑‍💼 4. admin_panel.py
+python
+Copy
+Edit
+from config import INCENTIVE_DURATION_YEARS
+
+admin_settings = {
+    "incentive_amount": 5000,
+    "target_increase_percent": 10
+}
+
+def set_incentive_amount(amount):
+    admin_settings["incentive_amount"] = amount
+
+def set_target_increase(percent):
+    admin_settings["target_increase_percent"] = percent
+
+def get_admin_settings():
+    return admin_settings
+👥 5. user_dashboard.py
+python
+Copy
+Edit
+def show_pumpman_dashboard(name, targets, achieved, eligible):
+    print(f"\nPumpman: {name}")
+    print(f"Target for today: {targets['individual_target']:.2f} litres")
+    print(f"Achieved today: {achieved:.2f} litres")
+    if eligible:
+        print("🎉 You are on track for your monthly incentive!")
+    else:
+        print("📉 You are currently below target.")
+🔁 6. main.py
+python
+Copy
+Edit
+from target_calculator import load_sales_data, get_last_year_sales, calculate_targets
+from admin_panel import get_admin_settings
+from user_dashboard import show_pumpman_dashboard
+
+sales_data = load_sales_data()
+target_month = "2025-04"  # Can be dynamic
+admin_settings = get_admin_settings()
+last_year_sales = get_last_year_sales(sales_data, target_month)
+
+pumpmen_on_duty = ["Ali", "John", "Meera"]
+targets = calculate_targets(last_year_sales, admin_settings["target_increase_percent"], len(pumpmen_on_duty))
+
+# Simulated daily achievements
+achievements = {
+    "Ali": 1200,
+    "John": 800,
+    "Meera": 1000
+}
+
+for name in pumpmen_on_duty:
+    achieved = achievements.get(name, 0)
+    eligible = achieved >= targets["individual_target"]
+    show_pumpman_dashboard(name, targets, achieved, eligible)
+🧠 Future Enhancements
+✅ Integrate SQLite or Firebase for login-based dashboards
+
+📱 React or Flutter front-end (Pumpman login panel with incentives shown visually)
+
+📊 Weekly email reports for admin and performance charting
+
+🔔 Notifications when targets are missed or achieved

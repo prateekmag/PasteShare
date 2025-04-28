@@ -1,0 +1,593 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Credit Customers Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title">Credit Customers Overview</h5>
+                    <p class="card-text">Manage credit customers and track their balances. You can add new customers, record purchases on credit, and process payments.</p>
+                    <div class="d-flex">
+                        <a href="/credit-customers/add" class="btn btn-primary me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                            Add Credit Customer
+                        </a>
+                        <a href="/credit-customers/due-payments" class="btn btn-warning me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                            Overdue Payments
+                        </a>
+                        <a href="/sales" class="btn btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                            Back to Sales
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Credit Summary</h5>
+                    <div>
+                        <select id="branch-filter" class="form-select form-select-sm" style="width: auto;">
+                            <option value="all">All Branches</option>
+                            <!-- Branch options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="credit-type-chart" height="250"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer Type</th>
+                                            <th>Count</th>
+                                            <th>Total Balance</th>
+                                            <th>Avg. Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="credit-summary-body">
+                                        <!-- Credit summary will be inserted here by JavaScript -->
+                                        <tr>
+                                            <td colspan="4" class="text-center">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot id="credit-summary-foot" style="display: none;">
+                                        <tr class="fw-bold">
+                                            <td>Total</td>
+                                            <td id="total-customers">0</td>
+                                            <td id="total-balance">₹0.00</td>
+                                            <td>-</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Credit Customers</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="input-group input-group-sm me-2" style="width: 200px;">
+                            <input type="text" id="search-input" class="form-control" placeholder="Search customers...">
+                            <button id="search-btn" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </button>
+                        </div>
+                        <select id="customer-type-filter" class="form-select form-select-sm me-2" style="width: auto;">
+                            <option value="all">All Types</option>
+                            <option value="general">General</option>
+                            <option value="government">Government</option>
+                        </select>
+                        <select id="status-filter" class="form-select form-select-sm" style="width: auto;">
+                            <option value="active">Active Only</option>
+                            <option value="all">All Statuses</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="blacklisted">Blacklisted</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Contact</th>
+                                    <th>Phone</th>
+                                    <th>Credit Limit</th>
+                                    <th>Current Balance</th>
+                                    <th>Last Payment</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-table-body">
+                                <!-- Loading message -->
+                                <tr id="loading-row">
+                                    <td colspan="10" class="text-center">Loading customers...</td>
+                                </tr>
+                                <!-- No customers message (hidden by default) -->
+                                <tr id="no-customers-row" style="display: none;">
+                                    <td colspan="10" class="text-center">No customers found. Add a new customer using the button above.</td>
+                                </tr>
+                                <!-- Customers will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-dark text-light d-flex justify-content-between align-items-center">
+                    <span id="customers-count">0 customers</span>
+                    <div class="pagination-controls">
+                        <button id="prev-page" class="btn btn-sm btn-primary me-2" disabled>Previous</button>
+                        <span id="page-info">Page 1</span>
+                        <button id="next-page" class="btn btn-sm btn-primary ms-2" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp Reminder Modal -->
+<div class="modal fade" id="whatsapp-modal" tabindex="-1" aria-labelledby="whatsapp-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="whatsapp-modal-label">Send Payment Reminder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="reminder-customer" class="form-label">Customer</label>
+                    <input type="text" class="form-control" id="reminder-customer" readonly>
+                    <input type="hidden" id="reminder-customer-id">
+                    <input type="hidden" id="reminder-phone">
+                </div>
+                <div class="mb-3">
+                    <label for="reminder-message" class="form-label">Message</label>
+                    <textarea class="form-control" id="reminder-message" rows="5"></textarea>
+                </div>
+                <div class="alert alert-info">
+                    <small>WhatsApp integration will be implemented in a future update. This is a placeholder for demonstration purposes.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="send-reminder-btn">Send Reminder</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const customersTableBody = document.getElementById('customers-table-body');
+        const loadingRow = document.getElementById('loading-row');
+        const noCustomersRow = document.getElementById('no-customers-row');
+        const customersCount = document.getElementById('customers-count');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const branchFilter = document.getElementById('branch-filter');
+        const customerTypeFilter = document.getElementById('customer-type-filter');
+        const statusFilter = document.getElementById('status-filter');
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const creditSummaryBody = document.getElementById('credit-summary-body');
+        const creditSummaryFoot = document.getElementById('credit-summary-foot');
+        const totalCustomers = document.getElementById('total-customers');
+        const totalBalance = document.getElementById('total-balance');
+        
+        // WhatsApp modal elements
+        const whatsappModal = new bootstrap.Modal(document.getElementById('whatsapp-modal'));
+        const reminderCustomerInput = document.getElementById('reminder-customer');
+        const reminderCustomerIdInput = document.getElementById('reminder-customer-id');
+        const reminderPhoneInput = document.getElementById('reminder-phone');
+        const reminderMessageInput = document.getElementById('reminder-message');
+        const sendReminderBtn = document.getElementById('send-reminder-btn');
+        
+        // Charts
+        let creditTypeChart = null;
+        
+        // Pagination state
+        let currentPage = 1;
+        let totalPages = 1;
+        const limit = 10;
+        
+        // Filter state
+        let selectedBranch = localStorage.getItem('selectedBranch') || 'all';
+        let selectedCustomerType = 'all';
+        let selectedStatus = 'active';
+        let searchTerm = '';
+        
+        // Set initial branch filter value
+        branchFilter.value = selectedBranch;
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+        
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Never';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString();
+        }
+        
+        // Populate branches dropdown
+        function populateBranches() {
+            const branches = [
+                { id: 'branch-1', name: 'Main Station' },
+                { id: 'branch-2', name: 'Highway Station' },
+                { id: 'branch-3', name: 'City Center' }
+            ];
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.id;
+                option.textContent = branch.name;
+                branchFilter.appendChild(option);
+            });
+        }
+        
+        // Fetch credit summary
+        function fetchCreditSummary() {
+            // Build URL with query parameters
+            let url = `/api/credit/summary`;
+            
+            if (selectedBranch !== 'all') {
+                url += `?branch_id=${selectedBranch}`;
+            }
+            
+            // Fetch summary from API
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear existing data
+                    creditSummaryBody.innerHTML = '';
+                    
+                    // Check if no data
+                    if (!data || !data.length) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="4" class="text-center">No credit customers found</td>';
+                        creditSummaryBody.appendChild(row);
+                        creditSummaryFoot.style.display = 'none';
+                        
+                        // Clear chart
+                        updateCreditTypeChart([]);
+                        return;
+                    }
+                    
+                    // Calculate totals
+                    let totalCount = 0;
+                    let totalAmount = 0;
+                    
+                    // Display data
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.customer_type.charAt(0).toUpperCase() + item.customer_type.slice(1)}</td>
+                            <td>${item.customer_count}</td>
+                            <td>${formatCurrency(item.total_balance)}</td>
+                            <td>${formatCurrency(item.avg_balance)}</td>
+                        `;
+                        creditSummaryBody.appendChild(row);
+                        
+                        totalCount += item.customer_count;
+                        totalAmount += item.total_balance;
+                    });
+                    
+                    // Update footer
+                    totalCustomers.textContent = totalCount;
+                    totalBalance.textContent = formatCurrency(totalAmount);
+                    creditSummaryFoot.style.display = 'table-footer-group';
+                    
+                    // Update chart
+                    updateCreditTypeChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching credit summary:', error);
+                    creditSummaryBody.innerHTML = '<tr><td colspan="4" class="text-center">Error loading data</td></tr>';
+                    creditSummaryFoot.style.display = 'none';
+                });
+        }
+        
+        // Update credit type chart
+        function updateCreditTypeChart(data) {
+            const ctx = document.getElementById('credit-type-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (creditTypeChart) {
+                creditTypeChart.destroy();
+            }
+            
+            if (!data || !data.length) {
+                return;
+            }
+            
+            // Prepare data for chart
+            const labels = data.map(item => item.customer_type.charAt(0).toUpperCase() + item.customer_type.slice(1));
+            const values = data.map(item => item.total_balance);
+            const counts = data.map(item => item.customer_count);
+            
+            // Colors
+            const backgroundColors = [
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ];
+            
+            // Create chart
+            creditTypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Credit Balance (₹)',
+                            data: values,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Number of Customers',
+                            data: counts,
+                            type: 'line',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Credit Balance by Customer Type'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Balance (₹)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Customers'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Fetch customers
+        function fetchCustomers() {
+            // Show loading
+            loadingRow.style.display = 'table-row';
+            noCustomersRow.style.display = 'none';
+            
+            // Clear existing customers
+            const rows = customersTableBody.querySelectorAll('tr:not(#loading-row):not(#no-customers-row)');
+            rows.forEach(row => row.remove());
+            
+            // Calculate offset
+            const offset = (currentPage - 1) * limit;
+            
+            // Build URL with query parameters
+            let url = `/api/credit/customers?limit=${limit}&offset=${offset}`;
+            
+            if (selectedBranch !== 'all') {
+                url += `&branch_id=${selectedBranch}`;
+            }
+            
+            if (selectedCustomerType !== 'all') {
+                url += `&customer_type=${selectedCustomerType}`;
+            }
+            
+            if (selectedStatus !== 'all') {
+                url += `&status=${selectedStatus}`;
+            }
+            
+            // Add search term if provided
+            if (searchTerm) {
+                url += `&search=${encodeURIComponent(searchTerm)}`;
+            }
+            
+            // Fetch customers from API
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading
+                    loadingRow.style.display = 'none';
+                    
+                    // Check if no customers
+                    if (!data || !data.length) {
+                        noCustomersRow.style.display = 'table-row';
+                        customersCount.textContent = '0 customers';
+                        return;
+                    }
+                    
+                    // Display customers
+                    data.forEach(customer => {
+                        const row = document.createElement('tr');
+                        
+                        // Create status badge with appropriate color
+                        let badgeClass = 'bg-success';
+                        if (customer.status === 'inactive') badgeClass = 'bg-warning';
+                        if (customer.status === 'blacklisted') badgeClass = 'bg-danger';
+                        
+                        const statusBadge = `<span class="badge ${badgeClass}">${customer.status.toUpperCase()}</span>`;
+                        
+                        // Create customer type badge
+                        const typeBadge = customer.customer_type === 'government' ? 
+                            '<span class="badge bg-info">GOVERNMENT</span>' : 
+                            '<span class="badge bg-secondary">GENERAL</span>';
+                        
+                        // Create action buttons with appropriate enable/disable based on status
+                        const disabledClass = customer.status !== 'active' ? 'disabled' : '';
+                        
+                        // Determine if WhatsApp reminder can be sent
+                        const canSendWhatsApp = customer.whatsapp_number && customer.status === 'active';
+                        
+                        row.innerHTML = `
+                            <td>${customer.customer_id}</td>
+                            <td><a href="/credit-customers/${customer.customer_id}">${customer.name}</a></td>
+                            <td>${typeBadge}</td>
+                            <td>${customer.contact_person || '-'}</td>
+                            <td>${customer.phone_number}</td>
+                            <td>${formatCurrency(customer.credit_limit)}</td>
+                            <td class="${customer.current_balance > 0 ? 'text-danger fw-bold' : ''}">${formatCurrency(customer.current_balance)}</td>
+                            <td>${formatDate(customer.last_payment_date)}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/credit-customers/${customer.customer_id}" class="btn btn-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </a>
+                                    <a href="/credit-customers/${customer.customer_id}/add-transaction" class="btn btn-success ${disabledClass}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                                    </a>
+                                    <button class="btn btn-warning ${canSendWhatsApp ? '' : 'disabled'}" onclick="openWhatsAppModal('${customer.customer_id}', '${customer.name}', '${customer.whatsapp_number || customer.phone_number}', ${customer.current_balance})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        
+                        customersTableBody.appendChild(row);
+                    });
+                    
+                    // Update customers count
+                    customersCount.textContent = `${data.length} customers`;
+                    
+                    // Update pagination
+                    // In a real app, we would get total count from API
+                    // For now, we just enable/disable next button based on returned results
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = data.length < limit;
+                    pageInfo.textContent = `Page ${currentPage}`;
+                })
+                .catch(error => {
+                    console.error('Error fetching customers:', error);
+                    loadingRow.style.display = 'none';
+                    noCustomersRow.style.display = 'table-row';
+                    noCustomersRow.cells[0].textContent = 'Error loading customers. Please try again.';
+                });
+        }
+        
+        // Event listeners for pagination
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchCustomers();
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            currentPage++;
+            fetchCustomers();
+        });
+        
+        // Event listeners for filters
+        branchFilter.addEventListener('change', () => {
+            selectedBranch = branchFilter.value;
+            localStorage.setItem('selectedBranch', selectedBranch);
+            currentPage = 1; // Reset to first page
+            fetchCustomers();
+            fetchCreditSummary();
+        });
+        
+        customerTypeFilter.addEventListener('change', () => {
+            selectedCustomerType = customerTypeFilter.value;
+            currentPage = 1; // Reset to first page
+            fetchCustomers();
+        });
+        
+        statusFilter.addEventListener('change', () => {
+            selectedStatus = statusFilter.value;
+            currentPage = 1; // Reset to first page
+            fetchCustomers();
+        });
+        
+        // Event listener for search
+        searchBtn.addEventListener('click', () => {
+            searchTerm = searchInput.value.trim();
+            currentPage = 1; // Reset to first page
+            fetchCustomers();
+        });
+        
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchTerm = searchInput.value.trim();
+                currentPage = 1; // Reset to first page
+                fetchCustomers();
+            }
+        });
+        
+        // WhatsApp reminder modal
+        window.openWhatsAppModal = function(customerId, customerName, phoneNumber, balance) {
+            reminderCustomerInput.value = customerName;
+            reminderCustomerIdInput.value = customerId;
+            reminderPhoneInput.value = phoneNumber;
+            
+            // Default message
+            reminderMessageInput.value = `Dear ${customerName},\n\nThis is a reminder that you have an outstanding balance of ${formatCurrency(balance)} with us. Please make a payment at your earliest convenience.\n\nThank you,\nPetrolPro Team`;
+            
+            whatsappModal.show();
+        };
+        
+        // Send WhatsApp reminder
+        sendReminderBtn.addEventListener('click', () => {
+            // This is a placeholder for the future WhatsApp integration
+            alert('WhatsApp integration will be implemented in a future update. For now, this is just a placeholder.');
+            whatsappModal.hide();
+        });
+        
+        // Initialize
+        populateBranches();
+        fetchCustomers();
+        fetchCreditSummary();
+    });
+</script>
+{% endblock %}

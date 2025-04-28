@@ -1,0 +1,52 @@
+
+{% extends "layout.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block page_title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                        <span class="text-white display-4">{{ current_user.username[0] | upper }}</span>
+                    </div>
+                    <h4>{{ current_user.full_name }}</h4>
+                    <p class="text-muted">{{ current_user.role }}</p>
+                </div>
+
+                <dl class="row">
+                    <dt class="col-sm-3">Username</dt>
+                    <dd class="col-sm-9">{{ current_user.username }}</dd>
+
+                    <dt class="col-sm-3">Email</dt>
+                    <dd class="col-sm-9">{{ current_user.email }}</dd>
+
+                    <dt class="col-sm-3">Role</dt>
+                    <dd class="col-sm-9">{{ current_user.role }}</dd>
+
+                    <dt class="col-sm-3">Branch</dt>
+                    <dd class="col-sm-9">{{ current_user.branch_id if current_user.branch_id else 'All Branches (Admin)' }}</dd>
+
+                    <dt class="col-sm-3">Account Status</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-{{ 'success' if current_user.is_active else 'danger' }}">
+                            {{ 'Active' if current_user.is_active else 'Inactive' }}
+                        </span>
+                    </dd>
+                </dl>
+
+                <div class="mt-4">
+                    <a href="/settings" class="btn btn-primary">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Add Totalizer Reading{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Enter New Totalizer Reading</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/totalizer/readings/add" method="POST">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="branch_id" class="form-label">Branch<span class="text-danger">*</span></label>
+                                    <select class="form-select" id="branch_id" name="branch_id" required>
+                                        <option value="" selected disabled>Select Branch</option>
+                                        <option value="branch-1">Main Station</option>
+                                        <option value="branch-2">Highway Station</option>
+                                        <option value="branch-3">City Center</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="pumpman_id" class="form-label">Pumpman ID<span class="text-danger">*</span></label>
+                                    <select class="form-select" id="pumpman_id" name="pumpman_id" required>
+                                        <option value="" selected disabled>Select Pumpman</option>
+                                        <!-- Attendants will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="pump_id" class="form-label">Pump ID<span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="pump_id" name="pump_id" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="nozzle_id" class="form-label">Nozzle ID<span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="nozzle_id" name="nozzle_id" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="product_type" class="form-label">Product Type<span class="text-danger">*</span></label>
+                                    <select class="form-select" id="product_type" name="product_type" required>
+                                        <option value="" selected disabled>Select Product</option>
+                                        <option value="Petrol">Petrol</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Premium Petrol">Premium Petrol</option>
+                                        <option value="Premium Diesel">Premium Diesel</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="reading_type" class="form-label">Reading Type<span class="text-danger">*</span></label>
+                                    <select class="form-select" id="reading_type" name="reading_type" required>
+                                        <option value="" selected disabled>Select Type</option>
+                                        <option value="opening">Opening Reading</option>
+                                        <option value="closing">Closing Reading</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="reading_value" class="form-label">Reading Value<span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="reading_value" name="reading_value" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="shift" class="form-label">Shift<span class="text-danger">*</span></label>
+                                    <select class="form-select" id="shift" name="shift" required>
+                                        <option value="" selected disabled>Select Shift</option>
+                                        <option value="morning">Morning (6AM-2PM)</option>
+                                        <option value="evening">Evening (2PM-10PM)</option>
+                                        <option value="night">Night (10PM-6AM)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="totalizer_image_url" class="form-label">Totalizer Image URL</label>
+                            <input type="url" class="form-control" id="totalizer_image_url" name="totalizer_image_url" placeholder="https://example.com/image.jpg">
+                            <div class="form-text">Optional: Link to an image of the totalizer reading.</div>
+                        </div>
+
+                        <div id="reading-verification" class="alert alert-warning" style="display: none;">
+                            <h5 class="alert-heading">Verify Details!</h5>
+                            <p>Please verify the reading details before submission.</p>
+                            <div id="verification-details"></div>
+                            <hr>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="verification-check" required>
+                                <label class="form-check-label" for="verification-check">
+                                    I confirm that the reading details are correct
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/totalizer" class="btn btn-secondary">Cancel</a>
+                            <button type="button" id="verify-btn" class="btn btn-warning">Verify Reading</button>
+                            <button type="submit" id="submit-btn" class="btn btn-primary" style="display: none;">Submit Reading</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const form = document.querySelector('form');
+        const verifyBtn = document.getElementById('verify-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const readingVerification = document.getElementById('reading-verification');
+        const verificationDetails = document.getElementById('verification-details');
+        const verificationCheck = document.getElementById('verification-check');
+        const pumpmanSelect = document.getElementById('pumpman_id');
+        const branchSelect = document.getElementById('branch_id');
+        const readingTypeSelect = document.getElementById('reading_type');
+        const pumpIdInput = document.getElementById('pump_id');
+        const nozzleIdInput = document.getElementById('nozzle_id');
+        
+        // Set branch ID from localStorage if available
+        const savedBranch = localStorage.getItem('selectedBranch');
+        if (savedBranch && savedBranch !== 'all') {
+            branchSelect.value = savedBranch;
+        }
+        
+        // Fetch attendants and populate dropdown
+        function fetchAttendants() {
+            const selectedBranch = branchSelect.value;
+            
+            fetch(`/api/staff/attendants?active_only=true`)
+                .then(response => response.json())
+                .then(attendants => {
+                    // Clear current options
+                    pumpmanSelect.innerHTML = '<option value="" selected disabled>Select Pumpman</option>';
+                    
+                    // Add new options
+                    attendants.forEach(attendant => {
+                        // Only add attendants with role "attendant" or "pumpman"
+                        if (attendant.role === 'attendant' || attendant.role === 'pumpman') {
+                            const option = document.createElement('option');
+                            option.value = attendant.employee_id;
+                            option.textContent = `${attendant.name} (${attendant.employee_id})`;
+                            pumpmanSelect.appendChild(option);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching attendants:', error);
+                    // Add a fallback option
+                    const option = document.createElement('option');
+                    option.value = "pumpman-1";
+                    option.textContent = "Pumpman 1";
+                    pumpmanSelect.appendChild(option);
+                });
+        }
+        
+        // Check if closing reading is valid
+        function checkClosingReading() {
+            if (readingTypeSelect.value !== 'closing') {
+                return Promise.resolve(true);
+            }
+            
+            const pumpId = pumpIdInput.value;
+            const nozzleId = nozzleIdInput.value;
+            const branchId = branchSelect.value;
+            const shift = document.getElementById('shift').value;
+            
+            // Fetch the latest opening reading for this pump/nozzle combination
+            return fetch(`/api/totalizer/readings?pump_id=${pumpId}&nozzle_id=${nozzleId}&branch_id=${branchId}&shift=${shift}&reading_type=opening&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.length) {
+                        alert('No opening reading found for this pump/nozzle combination for this shift. Please record an opening reading first.');
+                        return false;
+                    }
+                    
+                    const openingReading = data[0];
+                    const closingValue = parseFloat(document.getElementById('reading_value').value);
+                    
+                    if (closingValue < openingReading.reading_value) {
+                        const confirmed = confirm(`Warning: The closing reading (${closingValue}) is less than the opening reading (${openingReading.reading_value}). This might indicate a totalizer reset. Do you want to continue?`);
+                        return confirmed;
+                    }
+                    
+                    return true;
+                })
+                .catch(error => {
+                    console.error('Error checking closing reading:', error);
+                    return true; // Allow submission on error
+                });
+        }
+        
+        // Show verification details
+        function verifyReading() {
+            // Get form values
+            const branch = branchSelect.options[branchSelect.selectedIndex].text;
+            const pumpman = pumpmanSelect.selectedIndex > 0 ? pumpmanSelect.options[pumpmanSelect.selectedIndex].text : '';
+            const pumpId = pumpIdInput.value;
+            const nozzleId = nozzleIdInput.value;
+            const productType = document.getElementById('product_type').value;
+            const readingType = readingTypeSelect.value;
+            const readingValue = document.getElementById('reading_value').value;
+            const shift = document.getElementById('shift').value;
+            
+            // Validate form
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            // Check if closing reading is valid
+            checkClosingReading().then(valid => {
+                if (!valid) {
+                    return;
+                }
+                
+                // Format verification details
+                verificationDetails.innerHTML = `
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Branch:</span>
+                            <strong>${branch}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Pumpman:</span>
+                            <strong>${pumpman}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Pump/Nozzle:</span>
+                            <strong>${pumpId} / ${nozzleId}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Product Type:</span>
+                            <strong>${productType}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Reading Type:</span>
+                            <strong>${readingType.toUpperCase()}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Reading Value:</span>
+                            <strong>${readingValue}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Shift:</span>
+                            <strong>${shift}</strong>
+                        </li>
+                    </ul>
+                `;
+                
+                // Show verification section
+                readingVerification.style.display = 'block';
+                verifyBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+                
+                // Scroll to verification section
+                readingVerification.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+        
+        // Event listeners
+        verifyBtn.addEventListener('click', verifyReading);
+        
+        verificationCheck.addEventListener('change', function() {
+            submitBtn.disabled = !this.checked;
+        });
+        
+        branchSelect.addEventListener('change', fetchAttendants);
+        
+        readingTypeSelect.addEventListener('change', function() {
+            const verifyText = this.value === 'closing' ? 'Verify & Calculate Sales' : 'Verify Reading';
+            verifyBtn.textContent = verifyText;
+        });
+        
+        // Initialize
+        fetchAttendants();
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

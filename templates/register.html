@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block title %}Add New User{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card border-0">
+        <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+            <h1 class="h4 mb-0">Add New User</h1>
+            <span class="badge bg-info">{{ current_user.role }}</span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('auth.register') }}">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="full_name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-select" id="role" name="role" required>
+                        {% for role in available_roles %}
+                            <option value="{{ role.value }}">{{ role.value|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">
+                        {% if current_user.is_admin() %}
+                            As an admin, you can create accounts with any role.
+                        {% elif current_user.is_senior_manager() %}
+                            As a senior manager, you can create manager, pumpman, and tanker driver accounts for your branch.
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <div class="mb-4">
+                    <input type="hidden" name="branch_id" value="{{ current_user.branch_id }}">
+                    {% if current_user.is_admin() %}
+                        <label for="branch_id" class="form-label">Branch</label>
+                        <select class="form-select" id="branch_id" name="branch_id">
+                            <option value="all">All Branches</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+                
+                <div class="text-end">
+                    <a href="{{ url_for('auth.manage_users') }}" class="btn btn-secondary me-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

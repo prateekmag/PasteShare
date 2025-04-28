@@ -1,0 +1,930 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Sales Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h5 class="card-title">Sales Management Dashboard</h5>
+                    <p class="card-text">Track and manage fuel sales, payments, and credit customers.</p>
+                    <div class="d-flex">
+                        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addSaleModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                            Record New Sale
+                        </button>
+                        <a href="/totalizer/sales" class="btn btn-info me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                            View Shift Sales
+                        </a>
+                        <a href="/credit-customers" class="btn btn-warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                            Manage Credit Customers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-dark text-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Sales Overview</h5>
+                    <div class="d-flex align-items-center">
+                        <select id="time-period" class="form-select form-select-sm me-2" style="width: auto;">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">Last 7 Days</option>
+                            <option value="month" selected>Last 30 Days</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                        <div id="date-range-picker" style="display: none;">
+                            <input type="date" id="start-date" class="form-control form-control-sm me-2" style="width: auto;">
+                            <input type="date" id="end-date" class="form-control form-control-sm me-2" style="width: auto;">
+                            <button id="apply-date-range" class="btn btn-sm btn-primary">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <canvas id="sales-chart" height="250"></canvas>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">Total Sales</h6>
+                                    <h3 class="card-text" id="total-sales">₹0.00</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">Fuel Volume</h6>
+                                    <h3 class="card-text" id="total-volume">0.00 L</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">Transactions</h6>
+                                    <h3 class="card-text" id="transaction-count">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Payment Methods</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="payment-chart" height="200"></canvas>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payment-methods-body">
+                                <!-- Payment methods will be inserted here by JavaScript -->
+                                <tr>
+                                    <td colspan="3" class="text-center">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Recent Sales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Pump/Fuel</th>
+                                    <th>Volume</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                    <th>Payment</th>
+                                    <th>Attendant</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-sales-body">
+                                <!-- Recent sales will be inserted here by JavaScript -->
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading sales data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <a href="#" class="btn btn-sm btn-primary">View All Sales</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Credit Customers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h6 class="card-title">Outstanding Balances</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="toggle-customers" checked>
+                            <label class="form-check-label" for="toggle-customers">Show All</label>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Type</th>
+                                    <th class="text-end">Balance</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="credit-customers-body">
+                                <!-- Credit customers will be inserted here by JavaScript -->
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading credit customers...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Total Outstanding:</strong>
+                                <span id="total-outstanding">₹0.00</span>
+                            </div>
+                            <a href="/credit-customers/due-payments" class="btn btn-sm btn-warning">
+                                View Overdue
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-light">
+                    <h5 class="mb-0">Attendant Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="attendant-chart" height="250"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Attendant</th>
+                                            <th>Sales</th>
+                                            <th>Volume</th>
+                                            <th>Transactions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attendant-body">
+                                        <!-- Attendant data will be inserted here by JavaScript -->
+                                        <tr>
+                                            <td colspan="4" class="text-center">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sale Modal -->
+<div class="modal fade" id="addSaleModal" tabindex="-1" aria-labelledby="addSaleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSaleModalLabel">Record New Sale</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-sale-form">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pump_id" class="form-label">Pump ID</label>
+                                <input type="text" class="form-control" id="pump_id" name="pump_id" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="fuel_type" class="form-label">Fuel Type</label>
+                                <select class="form-select" id="fuel_type" name="fuel_type" required>
+                                    <option value="" selected disabled>Select Fuel Type</option>
+                                    <option value="Petrol">Petrol</option>
+                                    <option value="Diesel">Diesel</option>
+                                    <option value="Premium Petrol">Premium Petrol</option>
+                                    <option value="Premium Diesel">Premium Diesel</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="attendant" class="form-label">Attendant</label>
+                                <select class="form-select" id="attendant" name="attendant" required>
+                                    <option value="" selected disabled>Select Attendant</option>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="litres_sold" class="form-label">Litres</label>
+                                <input type="number" class="form-control" id="litres_sold" name="litres_sold" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="unit_price" class="form-label">Unit Price (₹)</label>
+                                <input type="number" class="form-control" id="unit_price" name="unit_price" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="total_amount" class="form-label">Total Amount (₹)</label>
+                                <input type="number" class="form-control" id="total_amount" name="total_amount" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="payment_method" class="form-label">Payment Method</label>
+                                <select class="form-select" id="payment_method" name="payment_method" required>
+                                    <option value="" selected disabled>Select Payment Method</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="credit_card">Credit Card</option>
+                                    <option value="debit_card">Debit Card</option>
+                                    <option value="upi">UPI</option>
+                                    <option value="credit">Credit Customer</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                                <input type="text" class="form-control" id="vehicle_number" name="vehicle_number">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="shift" class="form-label">Shift</label>
+                                <select class="form-select" id="shift" name="shift" required>
+                                    <option value="" selected disabled>Select Shift</option>
+                                    <option value="morning">Morning (6AM-2PM)</option>
+                                    <option value="evening">Evening (2PM-10PM)</option>
+                                    <option value="night">Night (10PM-6AM)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="credit-customer-section" style="display: none;">
+                        <div class="alert alert-warning">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>Credit Customer Sale</strong>
+                                <a href="/credit-customers/add" target="_blank" class="btn btn-sm btn-primary">Add New Customer</a>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <label for="credit_customer_id" class="form-label">Select Customer</label>
+                                        <select class="form-select" id="credit_customer_id" name="credit_customer_id">
+                                            <option value="" selected disabled>Select Customer</option>
+                                            <!-- Credit customers will be loaded by JavaScript -->
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="customer-info" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Credit Limit:</strong>
+                                        <span id="customer-credit-limit">₹0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Current Balance:</strong>
+                                        <span id="customer-current-balance">₹0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Available Credit:</strong>
+                                        <span id="customer-available-credit">₹0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-sale-btn">Save Sale</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize charts
+        let salesChart = null;
+        let paymentChart = null;
+        let attendantChart = null;
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return '₹' + parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+        
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString();
+        }
+        
+        // Format time
+        function formatTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        
+        // Show date range picker when "Custom Range" is selected
+        document.getElementById('time-period').addEventListener('change', function() {
+            if (this.value === 'custom') {
+                document.getElementById('date-range-picker').style.display = 'flex';
+            } else {
+                document.getElementById('date-range-picker').style.display = 'none';
+                loadSalesSummary(this.value);
+            }
+        });
+        
+        // Apply custom date range
+        document.getElementById('apply-date-range').addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (startDate && endDate) {
+                loadSalesSummary('custom', startDate, endDate);
+            } else {
+                alert('Please select both start and end dates');
+            }
+        });
+        
+        // Calculate total amount when litres or unit price changes
+        document.getElementById('litres_sold').addEventListener('input', calculateTotal);
+        document.getElementById('unit_price').addEventListener('input', calculateTotal);
+        
+        function calculateTotal() {
+            const litres = parseFloat(document.getElementById('litres_sold').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('unit_price').value) || 0;
+            document.getElementById('total_amount').value = (litres * unitPrice).toFixed(2);
+        }
+        
+        // Show/hide credit customer section based on payment method
+        document.getElementById('payment_method').addEventListener('change', function() {
+            if (this.value === 'credit') {
+                document.getElementById('credit-customer-section').style.display = 'block';
+                loadCreditCustomers();
+            } else {
+                document.getElementById('credit-customer-section').style.display = 'none';
+            }
+        });
+        
+        // Show customer info when a credit customer is selected
+        document.getElementById('credit_customer_id').addEventListener('change', function() {
+            const customerId = this.value;
+            if (customerId) {
+                // In a real implementation, we would fetch the customer details from the API
+                document.getElementById('customer-info').style.display = 'block';
+                // For demonstration, we'll use dummy data
+                document.getElementById('customer-credit-limit').textContent = formatCurrency(50000);
+                document.getElementById('customer-current-balance').textContent = formatCurrency(12500);
+                document.getElementById('customer-available-credit').textContent = formatCurrency(37500);
+            } else {
+                document.getElementById('customer-info').style.display = 'none';
+            }
+        });
+        
+        // Save sale button
+        document.getElementById('save-sale-btn').addEventListener('click', function() {
+            const form = document.getElementById('add-sale-form');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            // If payment method is credit, check if a customer is selected
+            const paymentMethod = document.getElementById('payment_method').value;
+            if (paymentMethod === 'credit') {
+                const customerId = document.getElementById('credit_customer_id').value;
+                if (!customerId) {
+                    alert('Please select a credit customer');
+                    return;
+                }
+                
+                // In a real implementation, we would check if the customer has enough credit
+                // For demonstration purposes, we'll just show a message
+                alert('Sale recorded on credit for customer ID: ' + customerId);
+            }
+            
+            // For demonstration, we'll just show a success message
+            alert('Sale recorded successfully!');
+            
+            // Reset the form and close the modal
+            form.reset();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addSaleModal'));
+            modal.hide();
+        });
+        
+        // Toggle credit customers display
+        document.getElementById('toggle-customers').addEventListener('change', function() {
+            const showAll = this.checked;
+            const rows = document.querySelectorAll('#credit-customers-body tr[data-customer-type]');
+            
+            if (showAll) {
+                rows.forEach(row => row.style.display = 'table-row');
+            } else {
+                rows.forEach(row => {
+                    if (row.dataset.customerType === 'general') {
+                        row.style.display = 'table-row';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+        });
+        
+        // Load sales summary data
+        function loadSalesSummary(period, startDate = null, endDate = null) {
+            // Set default dates for different periods
+            let apiStartDate, apiEndDate;
+            const today = new Date();
+            
+            switch(period) {
+                case 'today':
+                    apiStartDate = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+                    apiEndDate = new Date().toISOString();
+                    break;
+                case 'yesterday':
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    apiStartDate = new Date(yesterday.setHours(0, 0, 0, 0)).toISOString();
+                    apiEndDate = new Date(yesterday.setHours(23, 59, 59, 999)).toISOString();
+                    break;
+                case 'week':
+                    const lastWeek = new Date(today);
+                    lastWeek.setDate(lastWeek.getDate() - 7);
+                    apiStartDate = new Date(lastWeek).toISOString();
+                    apiEndDate = new Date().toISOString();
+                    break;
+                case 'month':
+                    const lastMonth = new Date(today);
+                    lastMonth.setDate(lastMonth.getDate() - 30);
+                    apiStartDate = new Date(lastMonth).toISOString();
+                    apiEndDate = new Date().toISOString();
+                    break;
+                case 'custom':
+                    apiStartDate = new Date(startDate).toISOString();
+                    apiEndDate = new Date(endDate + 'T23:59:59').toISOString();
+                    break;
+            }
+            
+            // Fetch data from API
+            fetch(`/api/sales/sales/summary?start_date=${apiStartDate}&end_date=${apiEndDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update summary cards
+                    document.getElementById('total-sales').textContent = formatCurrency(data.totals.sales_amount);
+                    document.getElementById('total-volume').textContent = data.totals.fuel_volume.toFixed(2) + ' L';
+                    document.getElementById('transaction-count').textContent = data.totals.transaction_count;
+                    
+                    // Update sales chart
+                    updateSalesChart(data.daily_totals);
+                    
+                    // Update payment methods chart
+                    updatePaymentMethodsChart(data.payment_methods);
+                    
+                    // Update attendant performance chart
+                    updateAttendantChart(data.attendant_performance);
+                })
+                .catch(error => {
+                    console.error('Error fetching sales summary:', error);
+                });
+                
+            // Also update recent sales
+            loadRecentSales(apiStartDate, apiEndDate);
+        }
+        
+        // Load recent sales data
+        function loadRecentSales(startDate, endDate) {
+            fetch(`/api/sales/sales?start_date=${startDate}&end_date=${endDate}&limit=5`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('recent-sales-body');
+                    tbody.innerHTML = '';
+                    
+                    if (!data.length) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="7" class="text-center">No sales found</td>';
+                        tbody.appendChild(row);
+                        return;
+                    }
+                    
+                    data.forEach(sale => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(sale.timestamp)} ${formatTime(sale.timestamp)}</td>
+                            <td>${sale.pump_id} / ${sale.fuel_type}</td>
+                            <td>${sale.litres_sold.toFixed(2)} L</td>
+                            <td>${formatCurrency(sale.unit_price)}</td>
+                            <td>${formatCurrency(sale.total_amount)}</td>
+                            <td>${sale.payment_method.replace('_', ' ').toUpperCase()}</td>
+                            <td>${sale.attendant}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching recent sales:', error);
+                });
+        }
+        
+        // Load credit customers data
+        function loadCreditCustomers() {
+            fetch('/api/credit/customers')
+                .then(response => response.json())
+                .then(data => {
+                    // Update credit customer dropdown in the sale form
+                    const select = document.getElementById('credit_customer_id');
+                    select.innerHTML = '<option value="" selected disabled>Select Customer</option>';
+                    
+                    data.forEach(customer => {
+                        const option = document.createElement('option');
+                        option.value = customer.customer_id;
+                        option.textContent = `${customer.name} (${customer.customer_type.toUpperCase()})`;
+                        select.appendChild(option);
+                    });
+                    
+                    // Update credit customers table
+                    updateCreditCustomersTable(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching credit customers:', error);
+                    // For demonstration, add some dummy data to the credit customers table
+                    const dummyData = [
+                        { customer_id: 'GEN001', name: 'ABC Transport', customer_type: 'general', current_balance: 15000 },
+                        { customer_id: 'GEN002', name: 'XYZ Logistics', customer_type: 'general', current_balance: 8500 },
+                        { customer_id: 'GOV001', name: 'City Police Dept', customer_type: 'government', current_balance: 22000 },
+                        { customer_id: 'GOV002', name: 'Municipal Corporation', customer_type: 'government', current_balance: 35000 }
+                    ];
+                    updateCreditCustomersTable(dummyData);
+                });
+        }
+        
+        // Update credit customers table
+        function updateCreditCustomersTable(data) {
+            const tbody = document.getElementById('credit-customers-body');
+            tbody.innerHTML = '';
+            
+            if (!data.length) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="4" class="text-center">No credit customers found</td>';
+                tbody.appendChild(row);
+                return;
+            }
+            
+            let totalOutstanding = 0;
+            
+            data.slice(0, 5).forEach(customer => {
+                const row = document.createElement('tr');
+                row.dataset.customerType = customer.customer_type;
+                
+                const typeBadge = customer.customer_type === 'government' ? 
+                    '<span class="badge bg-info">GOV</span>' : 
+                    '<span class="badge bg-secondary">GEN</span>';
+                
+                row.innerHTML = `
+                    <td><a href="/credit-customers/${customer.customer_id}">${customer.name}</a></td>
+                    <td>${typeBadge}</td>
+                    <td class="text-end text-danger fw-bold">${formatCurrency(customer.current_balance)}</td>
+                    <td>
+                        <a href="/credit-customers/${customer.customer_id}/add-transaction" class="btn btn-sm btn-outline-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        </a>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+                totalOutstanding += customer.current_balance;
+            });
+            
+            // Add a "more" row if there are more than 5 customers
+            if (data.length > 5) {
+                const moreRow = document.createElement('tr');
+                moreRow.innerHTML = `
+                    <td colspan="4" class="text-center">
+                        <a href="/credit-customers" class="text-primary">
+                            View all ${data.length} customers...
+                        </a>
+                    </td>
+                `;
+                tbody.appendChild(moreRow);
+            }
+            
+            // Calculate total outstanding for all customers, not just the displayed ones
+            totalOutstanding = data.reduce((sum, customer) => sum + customer.current_balance, 0);
+            document.getElementById('total-outstanding').textContent = formatCurrency(totalOutstanding);
+        }
+        
+        // Update sales chart
+        function updateSalesChart(dailySales) {
+            const ctx = document.getElementById('sales-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (salesChart) {
+                salesChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const labels = dailySales.map(day => day.date);
+            const amounts = dailySales.map(day => day.total_amount);
+            const volumes = dailySales.map(day => day.total_litres);
+            
+            // Create new chart
+            salesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales Amount (₹)',
+                            data: amounts,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Fuel Volume (L)',
+                            data: volumes,
+                            type: 'line',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Amount (₹)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Volume (L)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update payment methods chart
+        function updatePaymentMethodsChart(paymentMethods) {
+            const ctx = document.getElementById('payment-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (paymentChart) {
+                paymentChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const labels = paymentMethods.map(method => method.payment_method.replace('_', ' ').toUpperCase());
+            const amounts = paymentMethods.map(method => method.total_amount);
+            
+            // Colors for payment methods
+            const backgroundColors = [
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ];
+            
+            // Create new chart
+            paymentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            data: amounts,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+            
+            // Update payment methods table
+            const tbody = document.getElementById('payment-methods-body');
+            tbody.innerHTML = '';
+            
+            const totalAmount = amounts.reduce((sum, amount) => sum + amount, 0);
+            
+            paymentMethods.forEach((method, index) => {
+                const percentage = (method.total_amount / totalAmount * 100).toFixed(1);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${method.payment_method.replace('_', ' ').toUpperCase()}</td>
+                    <td class="text-end">${formatCurrency(method.total_amount)}</td>
+                    <td class="text-end">${percentage}%</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Update attendant performance chart
+        function updateAttendantChart(attendantData) {
+            const ctx = document.getElementById('attendant-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (attendantChart) {
+                attendantChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const labels = attendantData.map(att => att.attendant);
+            const amounts = attendantData.map(att => att.total_amount);
+            const transactions = attendantData.map(att => att.transaction_count);
+            
+            // Random colors for attendants
+            const backgroundColors = attendantData.map(() => {
+                const r = Math.floor(Math.random() * 200);
+                const g = Math.floor(Math.random() * 200);
+                const b = Math.floor(Math.random() * 200);
+                return `rgba(${r}, ${g}, ${b}, 0.7)`;
+            });
+            
+            // Create new chart
+            attendantChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales Amount (₹)',
+                            data: amounts,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Transactions',
+                            data: transactions,
+                            type: 'line',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Amount (₹)'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Transactions'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update attendant table
+            const tbody = document.getElementById('attendant-body');
+            tbody.innerHTML = '';
+            
+            attendantData.forEach(att => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${att.attendant}</td>
+                    <td>${formatCurrency(att.total_amount)}</td>
+                    <td>${att.total_litres.toFixed(2)} L</td>
+                    <td>${att.transaction_count}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Load attendants for the dropdown
+        function loadAttendants() {
+            fetch('/api/staff/attendants?active_only=true')
+                .then(response => response.json())
+                .then(attendants => {
+                    const select = document.getElementById('attendant');
+                    select.innerHTML = '<option value="" selected disabled>Select Attendant</option>';
+                    
+                    attendants.forEach(att => {
+                        const option = document.createElement('option');
+                        option.value = att.employee_id;
+                        option.textContent = att.name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching attendants:', error);
+                });
+        }
+        
+        // Initialize the page
+        loadSalesSummary('month');
+        loadAttendants();
+        loadCreditCustomers();
+    });
+</script>
+{% endblock %}

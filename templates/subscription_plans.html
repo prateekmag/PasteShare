@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block title %}Subscription Plans{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Subscription Plans</h2>
+            <div class="card mt-3">
+                <div class="card-body">
+                    {% if current_user.is_admin() %}
+                    <form method="post" class="mb-4 d-flex gap-2 align-items-end">
+                        <div>
+                            <input type="text" name="plan_type" class="form-control" placeholder="Plan Type" required maxlength="32">
+                        </div>
+                        <div>
+                            <input type="number" name="amount" class="form-control" placeholder="Amount (₹)" required min="0" step="0.01">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                    <table class="table table-hover text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Plan Type</th>
+                                <th>Amount (₹)</th>
+                                {% if current_user.is_admin() %}<th>Actions</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for plan in plans %}
+                            <tr>
+                                {% if current_user.is_admin() %}
+                                <form method="post" action="/subscription-plans/edit/{{ plan.id }}">
+                                    <td><input type="text" name="plan_type" value="{{ plan.plan_type }}" class="form-control" required maxlength="32"></td>
+                                    <td><input type="number" name="amount" value="{{ plan.amount }}" class="form-control" required min="0" step="0.01"></td>
+                                    <td>
+                                        <button type="submit" class="btn btn-sm btn-success">Save</button>
+                                        <a href="/subscription-plans/delete/{{ plan.id }}" class="btn btn-sm btn-danger ms-1" onclick="return confirm('Delete this plan?');">Delete</a>
+                                    </td>
+                                </form>
+                                {% else %}
+                                    <td>{{ plan.plan_type|capitalize }}</td>
+                                    <td>{{ plan.amount }}</td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

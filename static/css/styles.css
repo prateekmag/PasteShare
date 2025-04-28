@@ -1,0 +1,415 @@
+/* PetrolPro Custom Styles */
+
+/* Layout */
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: var(--bs-body-bg);
+}
+
+.wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 280px;
+    min-width: 280px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    background-color: var(--bs-dark-bg-subtle);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Enable scrolling by default since hover might be unreliable */
+    overflow-x: hidden;
+}
+
+/* Custom scrollbar for the sidebar - Webkit browsers (Chrome, Safari, Edge) */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox scrollbar support */
+.sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+    margin-left: -280px;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header a {
+    color: var(--bs-light);
+}
+
+.sidebar-item {
+    margin: 0.2rem 0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.8rem 1rem;
+    text-decoration: none;
+    border-radius: 0.375rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    margin: 0 0.5rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.sidebar-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: all 0.6s;
+    z-index: -1;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--bs-white);
+    transform: translateX(3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-link:hover::before {
+    left: 100%;
+}
+
+.sidebar-link:hover svg {
+    transform: scale(1.2);
+    color: var(--bs-primary);
+}
+
+.sidebar-link.active {
+    background-color: var(--bs-primary);
+    color: var(--bs-white);
+    box-shadow: 0 4px 10px rgba(var(--bs-primary-rgb), 0.4);
+}
+
+.sidebar-link svg {
+    transition: all 0.3s ease;
+}
+
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
+}
+
+/* Page Content */
+.content {
+    width: calc(100% - 280px);
+    min-height: 100vh;
+    margin-left: 280px;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.content.expanded {
+    width: 100%;
+    margin-left: 0;
+}
+
+.content-header {
+    height: 56px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.content-body {
+    flex: 1;
+}
+
+.content-footer {
+    margin-top: auto;
+}
+
+/* Branch Selector */
+.branch-selector {
+    margin: 1rem 0;
+    padding: 0 1rem;
+}
+
+.branch-selector select {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--bs-light);
+    transition: all 0.3s ease;
+}
+
+.branch-selector select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    border-color: var(--bs-primary);
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.branch-selector select option {
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+    padding: 10px;
+}
+
+.branch-selector::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--bs-primary-rgb), 0.5), transparent);
+}
+
+/* Dashboard card styles */
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(0, 0, 0, 0.15);
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.card .card-header {
+    font-weight: 500;
+    padding: 1rem 1.35rem;
+    margin-bottom: 0;
+    background-color: rgba(33, 37, 41, 0.03);
+    border-bottom: 1px solid rgba(33, 37, 41, 0.125);
+}
+
+.card-footer {
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Tank card styling */
+.tank-card {
+    transition: transform 0.2s ease;
+}
+
+.tank-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Progress bar colors */
+.progress {
+    height: 10px;
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+}
+
+/* Form styling */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Custom loader */
+.loader {
+    width: 48px;
+    height: 48px;
+    border: 5px solid #FFF;
+    border-bottom-color: var(--bs-primary);
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Toast notifications */
+.toast {
+    opacity: 1 !important;
+    position: relative;
+    z-index: 1100;
+}
+
+/* Table styles */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+th {
+    white-space: nowrap;
+}
+
+.table {
+    --bs-table-hover-bg: rgba(var(--bs-primary-rgb), 0.075);
+}
+
+/* Chart container */
+canvas {
+    max-width: 100%;
+}
+
+/* Status badges */
+.status-badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+}
+
+/* Fuel level indicators */
+.fuel-level-critical {
+    color: var(--bs-danger);
+}
+
+.fuel-level-warning {
+    color: var(--bs-warning);
+}
+
+.fuel-level-good {
+    color: var(--bs-success);
+}
+
+/* Custom page header */
+.page-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+/* User info and controls in sidebar */
+.user-info {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.375rem;
+}
+
+.user-controls .list-group-item {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 1;
+}
+
+.user-controls .list-group-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: all 0.6s;
+    z-index: -1;
+}
+
+.user-controls .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: var(--bs-white) !important;
+    transform: translateX(5px);
+}
+
+.user-controls .list-group-item:hover::before {
+    left: 100%;
+}
+
+.user-controls .list-group-item:hover svg {
+    transform: scale(1.2);
+    color: var(--bs-primary);
+}
+
+.user-controls .list-group-item svg {
+    transition: all 0.3s ease;
+}
+
+/* Admin specific styles */
+.admin-card {
+    border-left: 4px solid var(--bs-primary);
+}
+
+/* Notifications badge */
+.badge {
+    position: relative;
+    top: -8px;
+    left: -8px;
+    font-size: 0.65rem;
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-left: -280px;
+    }
+    
+    .sidebar.collapsed {
+        margin-left: 0;
+    }
+    
+    .content {
+        width: 100%;
+        margin-left: 0;
+    }
+    
+    .content.expanded {
+        width: calc(100% - 280px);
+        margin-left: 280px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar, .content-header, .content-footer, .no-print {
+        display: none !important;
+    }
+    
+    .content {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header, .card-footer {
+        background-color: transparent !important;
+    }
+    
+    body {
+        background-color: white !important;
+    }
+}
